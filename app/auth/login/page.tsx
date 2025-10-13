@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -12,7 +12,7 @@ import { ArrowLeft, Mail, Lock, AlertCircle, Eye, EyeOff, CheckCircle, Facebook,
 import { loginAction } from '@/server/actions/auth' // ✅ CHANGED: Using real Supabase action
 import { toast } from 'sonner' // ✅ ADDED: Toast notifications
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const verified = searchParams.get('verified')
@@ -245,5 +245,21 @@ export default function LoginPage() {
         </Dialog>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">Loading...</div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }
