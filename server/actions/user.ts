@@ -264,24 +264,10 @@ export async function getUserDetailsAction(): Promise<ApiResponse<any>> {
 
     console.log('📊 Fetching user details with subscription for:', (user as any).id);
 
-    // Fetch user with subscription plan details
+    // Fetch user details (subscription plan is stored as name reference)
     const { data: userDetails, error } = await supabase
       .from('users')
-      .select(`
-        *,
-        subscription_plans (
-          id,
-          name,
-          display_name,
-          tier,
-          price_monthly,
-          price_yearly,
-          features,
-          limits,
-          color,
-          icon
-        )
-      `)
+      .select('*')
       .eq('id', (user as any).id)
       .single();
 
@@ -293,12 +279,35 @@ export async function getUserDetailsAction(): Promise<ApiResponse<any>> {
       };
     }
 
+    // If user has a subscription plan name, fetch the plan details from admin
+    let subscriptionPlanDetails = null;
+    const userDetailsData = userDetails as any;
+    
+    if (userDetailsData.subscription_plan_name) {
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('subscription_plans')
+        .limit(1)
+        .single();
+
+      const adminDataTyped = adminData as any;
+      if (adminDataTyped && adminDataTyped.subscription_plans) {
+        const plans = adminDataTyped.subscription_plans as any[];
+        subscriptionPlanDetails = plans.find(
+          (plan: any) => plan.name === userDetailsData.subscription_plan_name
+        );
+      }
+    }
+
     console.log('✅ User details fetched successfully');
 
     return {
       success: true,
       message: 'User details retrieved successfully',
-      data: userDetails,
+      data: {
+        ...userDetailsData,
+        subscription_plans: subscriptionPlanDetails, // Attach plan details if found
+      },
     };
   } catch (error: any) {
     console.error('❌ Unexpected error in getUserDetailsAction:', error);

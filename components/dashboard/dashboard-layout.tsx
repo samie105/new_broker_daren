@@ -48,12 +48,13 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { ThemeSwitch } from '@/components/ui/theme-switch'
 import { NotificationBell } from '@/components/dashboard/notification-bell'
-import { logoutAction } from '@/lib/auth-actions'
+import { logoutAction } from '@/server/actions/auth'
+import { useUserProfile } from '@/hooks/use-user'
 
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -122,6 +123,33 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
+  const router = useRouter()
+  
+  // Fetch user profile data
+  const { data: user, isLoading: userLoading } = useUserProfile()
+  
+  // Get user display values
+  const userName = user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'User'
+  const userEmail = user?.email || 'user@example.com'
+  const userInitials = userName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'U'
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      const result = await logoutAction()
+      if (result.success) {
+        // Redirect to login page
+        router.push('/auth/login')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
 
   // Function to check if a navigation item is active
   const isItemActive = (href: string) => {
@@ -280,13 +308,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   )}
                 >
                   <Avatar className="w-9 h-9 ring-2 ring-primary/20">
-                    <AvatarImage src="/avatars/user.jpg" />
-                    <AvatarFallback className="bg-primary text-primary-foreground font-semibold">JD</AvatarFallback>
+                    <AvatarImage src={user?.avatar_url || "/avatars/user.jpg"} />
+                    <AvatarFallback className="bg-primary text-primary-foreground font-semibold">{userInitials}</AvatarFallback>
                   </Avatar>
                   {!sidebarCollapsed && (
                     <div className="flex-1 text-left">
-                      <div className="text-sm font-semibold">John Doe</div>
-                      <div className="text-xs text-muted-foreground">john@example.com</div>
+                      <div className="text-sm font-semibold">{userName}</div>
+                      <div className="text-xs text-muted-foreground">{userEmail}</div>
                     </div>
                   )}
                 </Button>
@@ -305,7 +333,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="text-red-600 focus:text-red-600 cursor-pointer"
-                  onClick={() => logoutAction()}
+                  onClick={handleLogout}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
@@ -350,12 +378,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className="p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-primary/10">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-14 w-14 ring-2 ring-primary/20">
-                      <AvatarImage src="/avatars/user.jpg" alt="User" />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">JD</AvatarFallback>
+                      <AvatarImage src={user?.avatar_url || "/avatars/user.jpg"} alt="User" />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">{userInitials}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="text-base font-semibold">John Doe</p>
-                      <p className="text-sm text-muted-foreground">john@example.com</p>
+                      <p className="text-base font-semibold">{userName}</p>
+                      <p className="text-sm text-muted-foreground">{userEmail}</p>
                       <div className="flex items-center mt-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                         <span className="text-xs text-green-600 font-medium">Online</span>
@@ -457,7 +485,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Button 
                       variant="ghost" 
                       className="w-full justify-start h-12 px-3 rounded-xl text-red-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                      onClick={() => logoutAction()}
+                      onClick={handleLogout}
                     >
                       <div className="flex items-center space-x-3 w-full">
                         <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20 flex-shrink-0">
@@ -506,8 +534,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full hidden lg:flex p-0 hover:bg-accent">
                   <Avatar className="h-8 w-8 ring-2 ring-primary/20 transition-all hover:ring-primary/40">
-                    <AvatarImage src="/avatars/user.jpg" alt="User" />
-                    <AvatarFallback className="bg-primary text-primary-foreground font-semibold">JD</AvatarFallback>
+                    <AvatarImage src={user?.avatar_url || "/avatars/user.jpg"} alt="User" />
+                    <AvatarFallback className="bg-primary text-primary-foreground font-semibold">{userInitials}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -516,13 +544,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className="flex flex-col space-y-2 p-2">
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src="/avatars/user.jpg" alt="User" />
-                        <AvatarFallback className="bg-primary text-primary-foreground">JD</AvatarFallback>
+                        <AvatarImage src={user?.avatar_url || "/avatars/user.jpg"} alt="User" />
+                        <AvatarFallback className="bg-primary text-primary-foreground">{userInitials}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="text-sm font-medium leading-none">John Doe</p>
+                        <p className="text-sm font-medium leading-none">{userName}</p>
                         <p className="text-xs leading-none text-muted-foreground mt-1">
-                          john@example.com
+                          {userEmail}
                         </p>
                       </div>
                     </div>
@@ -544,7 +572,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="text-red-600 focus:text-red-600 cursor-pointer"
-                  onClick={() => logoutAction()}
+                  onClick={handleLogout}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>

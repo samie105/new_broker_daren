@@ -364,9 +364,8 @@ export async function getDashboardMetricsAction() {
         total_deposited,
         total_withdrawn,
         plan_bonus,
-        subscription_plans!subscription_plan_id (
-          display_name
-        )
+        subscription_plan_name,
+        subscription_status
       `)
       .eq('id', userId)
       .single()
@@ -387,7 +386,7 @@ export async function getDashboardMetricsAction() {
       total_deposited: userData.total_deposited || 0,
       total_withdrawn: userData.total_withdrawn || 0,
       plan_bonus: userData.plan_bonus || 0,
-      subscription_plan: userData.subscription_plans?.display_name || 'Bronze',
+      subscription_plan: userData.subscription_plan_name || 'Bronze',
     }
 
     return {

@@ -3,6 +3,7 @@ import React from 'react'
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
+import { Providers } from '@/components/providers'
 import { Toaster } from 'sonner'
 
 const poppins = Poppins({ 
@@ -29,15 +30,17 @@ export default function RootLayout({ children }: RootLayoutProps) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster 
-            position="top-right"
-            richColors
-            closeButton
-            duration={4000}
-            theme="system"
-            expand={false}
-          />
+          <Providers>
+            {children}
+            <Toaster 
+              position="top-right"
+              richColors
+              closeButton
+              duration={4000}
+              theme="system"
+              expand={false}
+            />
+          </Providers>
         </ThemeProvider>
       </body>
     </html>
