@@ -1,33 +1,96 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User, Mail, Phone, MapPin, Camera, ChevronDown, ChevronUp } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Camera, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
+import { getUserProfileAction, updateUserProfileAction } from '@/server/actions/user'
+import { toast } from 'sonner'
 
 export function ProfileSettings() {
   const [formData, setFormData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 234 567 8900',
-    country: 'United States',
-    city: 'New York',
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    country: '',
+    city: '',
   })
+  
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState('')
 
   const [isPhotoOpen, setIsPhotoOpen] = useState(true)
   const [isInfoOpen, setIsInfoOpen] = useState(true)
+
+  // Fetch user profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true)
+      try {
+        const response = await getUserProfileAction()
+        if (response.success && response.data) {
+          const user = response.data
+          setFormData({
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            country: user.country || '',
+            city: user.city || '',
+          })
+          setAvatarUrl(user.avatar_url || '')
+        } else {
+          toast.error(response.error || 'Failed to load profile')
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+        toast.error('Failed to load profile')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSave = () => {
-    // Handle save logic
-    console.log('Saving profile:', formData)
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const response = await updateUserProfileAction(formData)
+      if (response.success) {
+        toast.success('Profile updated successfully')
+      } else {
+        toast.error(response.error || 'Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast.error('Failed to update profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription>Update your personal information and profile picture</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -50,8 +113,10 @@ export function ProfileSettings() {
           {isPhotoOpen && (
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20">
-            <AvatarImage src="/placeholder-avatar.jpg" alt="Profile" />
-            <AvatarFallback className="text-xl">JD</AvatarFallback>
+            <AvatarImage src={avatarUrl || "/placeholder-avatar.jpg"} alt="Profile" />
+            <AvatarFallback className="text-xl">
+              {formData.first_name?.[0]?.toUpperCase()}{formData.last_name?.[0]?.toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div>
             <Button variant="outline" size="sm" className="gap-2">
@@ -80,13 +145,13 @@ export function ProfileSettings() {
             <>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="firstName">First Name</Label>
+            <Label htmlFor="first_name">First Name</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
+                id="first_name"
+                name="first_name"
+                value={formData.first_name}
                 onChange={handleInputChange}
                 className="pl-10"
                 placeholder="Enter first name"
@@ -95,13 +160,13 @@ export function ProfileSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
+            <Label htmlFor="last_name">Last Name</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
+                id="last_name"
+                name="last_name"
+                value={formData.last_name}
                 onChange={handleInputChange}
                 className="pl-10"
                 placeholder="Enter last name"
@@ -173,7 +238,16 @@ export function ProfileSettings() {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Changes'
+            )}
+          </Button>
         </div>
             </>
           )}

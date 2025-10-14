@@ -1,12 +1,13 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Copy, QrCode, ArrowUpRight, CreditCard, Building, Wallet, Users } from 'lucide-react'
+import { Copy, QrCode, ArrowUpRight, CreditCard, Building, Wallet, Users, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
+import { getCryptoDepositMethodsAction, getP2PDepositMethodsAction } from '@/server/actions/deposits'
 
 const depositMethods = [
   {
@@ -54,13 +55,60 @@ const cryptoOptions = [
   { symbol: 'USDT', name: 'Tether', address: '0x742d35Cc6634C0532925a3b8D3Ac92E5F7C1c83E', icon: '/assets/crypto/USDT.svg' }
 ]
 
+const p2pProviders = [
+  { id: 'cashapp', name: 'Cash App', icon: '/assets/payment/cashapp.png' },
+  { id: 'venmo', name: 'Venmo', icon: '/assets/payment/venmo.png' },
+  { id: 'zelle', name: 'Zelle', icon: '/assets/payment/zelle.png' },
+  { id: 'paypal', name: 'PayPal', icon: '/assets/payment/paypal.png' }
+]
+
 export function DepositMethods() {
   const [selectedMethod, setSelectedMethod] = useState('crypto')
   const [selectedCrypto, setSelectedCrypto] = useState('BTC')
+  const [selectedP2PProvider, setSelectedP2PProvider] = useState('cashapp')
   const [copied, setCopied] = useState(false)
   const [p2pUserId] = useState('USER-' + Math.random().toString(36).substr(2, 9).toUpperCase())
+  
+  // Real data from database
+  const [cryptoMethods, setCryptoMethods] = useState<any[]>([])
+  const [p2pMethods, setP2PMethods] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const selectedCryptoData = cryptoOptions.find(crypto => crypto.symbol === selectedCrypto)
+  const selectedCryptoData = cryptoMethods.find(crypto => crypto.symbol === selectedCrypto) || cryptoOptions.find(crypto => crypto.symbol === selectedCrypto)
+  const selectedProviderData = p2pMethods.find(provider => provider.id === selectedP2PProvider) || p2pProviders.find(provider => provider.id === selectedP2PProvider)
+
+  // Fetch deposit methods from database
+  useEffect(() => {
+    const fetchDepositMethods = async () => {
+      setLoading(true)
+      try {
+        const [cryptoResponse, p2pResponse] = await Promise.all([
+          getCryptoDepositMethodsAction(),
+          getP2PDepositMethodsAction()
+        ])
+
+        if (cryptoResponse.success && cryptoResponse.data) {
+          setCryptoMethods(cryptoResponse.data)
+          if (cryptoResponse.data.length > 0) {
+            setSelectedCrypto(cryptoResponse.data[0].symbol)
+          }
+        }
+
+        if (p2pResponse.success && p2pResponse.data) {
+          setP2PMethods(p2pResponse.data)
+          if (p2pResponse.data.length > 0) {
+            setSelectedP2PProvider(p2pResponse.data[0].id)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching deposit methods:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDepositMethods()
+  }, [])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -82,15 +130,14 @@ export function DepositMethods() {
           <label className="text-sm font-medium">Deposit Method</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {depositMethods.map((method) => (
-              <button
+              <div
                 key={method.id}
-                onClick={() => setSelectedMethod(method.id)}
-                disabled={!method.available}
+                onClick={() => method.available && setSelectedMethod(method.id)}
                 className={`p-4 rounded-xl border-2 text-left transition-all duration-200 ${
                   selectedMethod === method.id
                     ? 'border-primary bg-primary/5'
                     : method.available
-                    ? 'border-border hover:border-primary/50 hover:bg-muted/50'
+                    ? 'border-border hover:border-primary/50 hover:bg-muted/50 cursor-pointer'
                     : 'border-border/50 bg-muted/30 cursor-not-allowed opacity-50'
                 }`}
               >
@@ -117,40 +164,51 @@ export function DepositMethods() {
                     <span className="font-medium">{method.time}</span>
                   </div>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>
 
         {selectedMethod === 'crypto' && (
           <>
-            {/* Cryptocurrency Selection */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Select Cryptocurrency</label>
-              <div className="grid grid-cols-2 gap-3">
-                {cryptoOptions.map((crypto) => (
-                  <button
-                    key={crypto.symbol}
-                    onClick={() => setSelectedCrypto(crypto.symbol)}
-                    className={`p-3 rounded-xl border text-left transition-all duration-200 ${
-                      selectedCrypto === crypto.symbol
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Image
-                        src={crypto.icon}
-                        alt={crypto.name}
-                        width={24}
-                        height={24}
-                        className="rounded-full"
-                      />
-                      <div>
-                        <div className="font-semibold text-sm">{crypto.symbol}</div>
-                        <div className="text-xs text-muted-foreground">{crypto.name}</div>
-                      </div>
-                    </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : cryptoMethods.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No cryptocurrency deposit methods available</p>
+              </div>
+            ) : (
+              <>
+                {/* Cryptocurrency Selection */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Select Cryptocurrency</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {cryptoMethods.map((crypto) => (
+                      <button
+                        key={crypto.symbol}
+                        onClick={() => setSelectedCrypto(crypto.symbol)}
+                        className={`p-3 rounded-xl border text-left transition-all duration-200 ${
+                          selectedCrypto === crypto.symbol
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Image
+                            src={crypto.icon}
+                            alt={crypto.name}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
+                          <div>
+                            <div className="font-semibold text-sm">{crypto.symbol}</div>
+                            <div className="text-xs text-muted-foreground">{crypto.name}</div>
+                          </div>
+                        </div>
                   </button>
                 ))}
               </div>
@@ -197,88 +255,140 @@ export function DepositMethods() {
                     <div className="font-semibold text-yellow-800 dark:text-yellow-400">Important:</div>
                     <ul className="text-yellow-700 dark:text-yellow-300 space-y-1 text-xs">
                       <li>• Only send {selectedCryptoData.symbol} to this address</li>
-                      <li>• Minimum deposit: 0.001 {selectedCryptoData.symbol}</li>
-                      <li>• Deposits require 2 network confirmations</li>
+                      <li>• Network: {selectedCryptoData.network}</li>
+                      <li>• Minimum deposit: {selectedCryptoData.min_deposit} {selectedCryptoData.symbol}</li>
+                      <li>• Deposits require {selectedCryptoData.confirmations_required} network confirmations</li>
                       <li>• Do not send from smart contracts</li>
                     </ul>
                   </div>
                 </div>
               </div>
             )}
+              </>
+            )}
           </>
         )}
 
         {selectedMethod === 'p2p' && (
-          <div className="space-y-4">
-            <div className="bg-muted/50 rounded-xl p-6 border">
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-                  <Users className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">P2P Transfer</h3>
-                <p className="text-sm text-muted-foreground">
-                  Share your user ID or QR code with another user to receive funds instantly
-                </p>
+          <>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-
-              {/* QR Code Display */}
-              <div className="flex justify-center mb-6">
-                <div className="bg-white dark:bg-white p-6 rounded-xl">
-                  <QRCodeSVG
-                    value={`p2p:${p2pUserId}`}
-                    size={200}
-                    level="H"
-                    includeMargin={true}
-                    imageSettings={{
-                      src: "/assets/crypto/BTC.svg",
-                      height: 40,
-                      width: 40,
-                      excavate: true,
-                    }}
-                  />
-                </div>
+            ) : p2pMethods.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No P2P payment methods available</p>
               </div>
-
-              {/* User ID Display */}
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Your P2P User ID</label>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 p-4 bg-background rounded-xl border border-border">
-                      <code className="text-base font-mono font-semibold tracking-wider">
-                        {p2pUserId}
-                      </code>
-                    </div>
-                    <Button
-                      variant="default"
-                      size="lg"
-                      onClick={() => copyToClipboard(p2pUserId)}
-                      className="h-14"
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      {copied ? 'Copied!' : 'Copy'}
-                    </Button>
+            ) : (
+              <div className="space-y-4">
+                {/* P2P Provider Selection */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Select Payment Provider</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {p2pMethods.map((provider) => (
+                      <button
+                        key={provider.id}
+                        onClick={() => setSelectedP2PProvider(provider.id)}
+                        className={`p-3 rounded-xl border text-left transition-all duration-200 ${
+                          selectedP2PProvider === provider.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Image
+                            src={provider.icon}
+                            alt={provider.name}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
+                          <div>
+                            <div className="font-semibold text-sm">{provider.name}</div>
+                            <div className="text-xs text-muted-foreground">Instant transfer</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Instructions */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-xl p-4">
-                  <div className="text-sm space-y-2">
-                    <div className="font-semibold text-blue-800 dark:text-blue-400 flex items-center gap-2">
-                      <ArrowUpRight className="w-4 h-4" />
-                      How to receive funds via P2P:
+            {/* Selected Provider Details */}
+            {selectedProviderData && (
+              <div className="bg-muted/50 rounded-xl p-6 border">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-white dark:bg-gray-100 rounded-xl mb-4">
+                    <Image
+                      src={selectedProviderData.icon}
+                      alt={selectedProviderData.name}
+                      width={72}
+                      height={72}
+                      className="object-contain"
+                    />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">
+                    {selectedProviderData.name} Transfer
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Share your user ID with the sender to receive funds via {selectedProviderData.name}
+                  </p>
+                </div>
+
+                {/* QR Code Display */}
+                <div className="flex justify-center mb-6">
+                  <div className="bg-white dark:bg-white p-6 rounded-xl">
+                    <QRCodeSVG
+                      value={`p2p:${selectedP2PProvider}:${p2pUserId}`}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                </div>
+
+                {/* User ID Display */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Your P2P User ID</label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 p-4 bg-background rounded-xl border border-border">
+                        <code className="text-base font-mono font-semibold tracking-wider">
+                          {p2pUserId}
+                        </code>
+                      </div>
+                      <Button
+                        variant="default"
+                        size="lg"
+                        onClick={() => copyToClipboard(p2pUserId)}
+                        className="h-14"
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        {copied ? 'Copied!' : 'Copy'}
+                      </Button>
                     </div>
-                    <ol className="text-blue-700 dark:text-blue-300 space-y-1 text-xs pl-4 list-decimal">
-                      <li>Share your User ID or QR code with the sender</li>
-                      <li>Sender enters your ID in their withdrawal/transfer section</li>
-                      <li>Funds will be credited instantly to your account</li>
-                      <li>Check your transaction history for confirmation</li>
-                    </ol>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-xl p-4">
+                    <div className="text-sm space-y-2">
+                      <div className="font-semibold text-blue-800 dark:text-blue-400 flex items-center gap-2">
+                        <ArrowUpRight className="w-4 h-4" />
+                        How to receive funds via {selectedProviderData.name}:
+                      </div>
+                      <ol className="text-blue-700 dark:text-blue-300 space-y-1 text-xs pl-4 list-decimal">
+                        <li>{selectedProviderData.instructions}</li>
+                        <li>Funds will be credited instantly to your account</li>
+                        <li>Check your transaction history for confirmation</li>
+                      </ol>
+                    </div>
                   </div>
                 </div>
               </div>
+            )}
             </div>
-          </div>
+          )}
+          </>
         )}
 
         {selectedMethod === 'bank' && (

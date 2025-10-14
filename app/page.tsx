@@ -5,6 +5,7 @@ import { TradingSection } from '@/components/sections/trading-section'
 import { PortfolioSection } from '@/components/sections/portfolio-section'
 import { StakingSection } from '@/components/sections/staking-section'
 import { InvestmentSection } from '@/components/sections/investment-section'
+import { DepositSection } from '@/components/sections/deposit-section'
 import { TestimonialsSection } from '@/components/sections/testimonials-section'
 import { CTASection } from '@/components/sections/cta-section'
 import { Header } from '@/components/layout/header'
@@ -29,7 +30,9 @@ export default function HomePage() {
         <div id="features">
           <FeaturesSection />
         </div>
-        
+         <div id="deposits">
+          <DepositSection />
+        </div>
         <div id="trading">
           <TradingSection />
         </div>
@@ -58,6 +61,8 @@ export default function HomePage() {
         <div id="investment">
           <InvestmentSection />
         </div>
+
+       
     
         <TestimonialsSection />
         <CTASection />

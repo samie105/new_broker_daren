@@ -1,14 +1,97 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
-import { Mail, Bell, ChevronDown, ChevronUp } from 'lucide-react'
+import { Mail, Bell, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
+import { getUserProfileAction, updateUserPreferencesAction } from '@/server/actions/user'
+import { toast } from 'sonner'
 
 export function NotificationSettings() {
+  const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState(false)
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [inAppNotifications, setInAppNotifications] = useState(true)
   const [isChannelsOpen, setIsChannelsOpen] = useState(true)
+
+  // Fetch user preferences on mount
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      setLoading(true)
+      try {
+        const response = await getUserProfileAction()
+        if (response.success && response.data) {
+          const user = response.data as any
+          setEmailNotifications(user.marketing_emails_enabled ?? true)
+          setInAppNotifications(user.trading_notifications_enabled ?? true)
+        }
+      } catch (error) {
+        console.error('Error fetching preferences:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPreferences()
+  }, [])
+
+  const handleEmailNotificationsChange = async (checked: boolean) => {
+    setEmailNotifications(checked)
+    setUpdating(true)
+    try {
+      const response = await updateUserPreferencesAction({
+        marketing_emails_enabled: checked,
+      })
+      if (response.success) {
+        toast.success('Email notification preferences updated')
+      } else {
+        toast.error(response.error || 'Failed to update preferences')
+        setEmailNotifications(!checked) // Revert on error
+      }
+    } catch (error) {
+      console.error('Error updating preferences:', error)
+      toast.error('Failed to update preferences')
+      setEmailNotifications(!checked) // Revert on error
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleInAppNotificationsChange = async (checked: boolean) => {
+    setInAppNotifications(checked)
+    setUpdating(true)
+    try {
+      const response = await updateUserPreferencesAction({
+        trading_notifications_enabled: checked,
+      })
+      if (response.success) {
+        toast.success('In-app notification preferences updated')
+      } else {
+        toast.error(response.error || 'Failed to update preferences')
+        setInAppNotifications(!checked) // Revert on error
+      }
+    } catch (error) {
+      console.error('Error updating preferences:', error)
+      toast.error('Failed to update preferences')
+      setInAppNotifications(!checked) // Revert on error
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification Preferences</CardTitle>
+          <CardDescription>Choose how you want to receive notifications</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card>
@@ -42,7 +125,8 @@ export function NotificationSettings() {
             </div>
             <Switch
               checked={emailNotifications}
-              onCheckedChange={setEmailNotifications}
+              onCheckedChange={handleEmailNotificationsChange}
+              disabled={updating}
             />
           </div>
 
@@ -58,7 +142,8 @@ export function NotificationSettings() {
             </div>
             <Switch
               checked={inAppNotifications}
-              onCheckedChange={setInAppNotifications}
+              onCheckedChange={handleInAppNotificationsChange}
+              disabled={updating}
             />
           </div>
             </div>

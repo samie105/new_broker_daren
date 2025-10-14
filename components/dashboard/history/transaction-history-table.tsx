@@ -187,12 +187,6 @@ export function TransactionHistoryTable({ transactions = [] }: TransactionHistor
             <div className="text-muted-foreground">No transactions found matching your criteria</div>
           </div>
         )}
-        
-        <div className="mt-6 pt-4 border-t border-border">
-          <Button variant="outline" className="w-full" size="sm">
-            Load More Transactions
-          </Button>
-        </div>
       </CardContent>
     </Card>
   )

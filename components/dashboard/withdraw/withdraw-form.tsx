@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ArrowDownLeft, Wallet, CreditCard, Building, CheckCircle, AlertCircle } from 'lucide-react'
+import { ArrowDownLeft, Wallet, CreditCard, Building, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import Image from 'next/image'
+import { validateTaxCodePinAction, validateWithdrawalPinAction, processWithdrawalAction } from '@/server/actions/withdrawals'
+import { toast } from 'sonner'
 
 const withdrawalMethods = [
   {
@@ -61,6 +63,9 @@ export function WithdrawForm() {
   const [waitingForWithdrawalPin, setWaitingForWithdrawalPin] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [currentStep, setCurrentStep] = useState('form') // 'form', 'processing', 'success'
+  const [taxPinVerified, setTaxPinVerified] = useState(false)
+  const [withdrawalPinVerified, setWithdrawalPinVerified] = useState(false)
+  const [isValidatingPin, setIsValidatingPin] = useState(false)
 
   const selectedCryptoData = cryptoOptions.find(crypto => crypto.symbol === selectedCrypto)
 
@@ -69,17 +74,21 @@ export function WithdrawForm() {
 
     const interval = setInterval(() => {
       setProgress((prevProgress) => {
-        // Stop at 80% if waiting for tax PIN
-        if (prevProgress >= 80 && !taxCodePin) {
-          setProgressMessage('Tax verification required')
-          setWaitingForTaxPin(true)
+        // Stop at 80% if waiting for tax PIN and not verified
+        if (prevProgress >= 80 && !taxPinVerified) {
+          if (!waitingForTaxPin) {
+            setProgressMessage('Tax verification required')
+            setWaitingForTaxPin(true)
+          }
           return 80
         }
         
-        // Stop at 90% if waiting for withdrawal PIN
-        if (prevProgress >= 90 && !withdrawalPin) {
-          setProgressMessage('Final authorization required')
-          setWaitingForWithdrawalPin(true)
+        // Stop at 90% if waiting for withdrawal PIN and not verified
+        if (prevProgress >= 90 && !withdrawalPinVerified) {
+          if (!waitingForWithdrawalPin) {
+            setProgressMessage('Final authorization required')
+            setWaitingForWithdrawalPin(true)
+          }
           return 90
         }
         
@@ -100,6 +109,10 @@ export function WithdrawForm() {
           setProgressMessage('Initializing withdrawal...')
         } else if (newProgress >= 50 && newProgress < 80) {
           setProgressMessage('Validating transaction details...')
+        } else if (newProgress >= 80 && newProgress < 90 && taxPinVerified) {
+          setProgressMessage('Processing tax verification...')
+        } else if (newProgress >= 90 && newProgress < 100 && withdrawalPinVerified) {
+          setProgressMessage('Finalizing withdrawal...')
         }
 
         return newProgress
@@ -107,27 +120,88 @@ export function WithdrawForm() {
     }, 100)
 
     return () => clearInterval(interval)
-  }, [isProcessing, taxCodePin, withdrawalPin])
+  }, [isProcessing, taxPinVerified, withdrawalPinVerified, waitingForTaxPin, waitingForWithdrawalPin])
 
-  const handleTaxPinSubmit = () => {
-    if (taxCodePin.length === 6) {
-      setWaitingForTaxPin(false)
-      setProgressMessage('Processing tax verification...')
-      // Continue progress from 80% to 90%
-      setTimeout(() => {
-        setProgress(85)
-      }, 500)
+  const handleTaxPinSubmit = async () => {
+    if (taxCodePin.length !== 6) {
+      toast.error('Please enter a 6-digit tax code PIN')
+      return
+    }
+
+    setIsValidatingPin(true)
+    try {
+      const result = await validateTaxCodePinAction(taxCodePin)
+      
+      if (result.success && result.data) {
+        setTaxPinVerified(true)
+        setWaitingForTaxPin(false)
+        setProgressMessage('Tax verification successful...')
+        toast.success('Tax code verified successfully')
+        
+        // Continue progress from 80% to 90%
+        setTimeout(() => {
+          setProgress(85)
+        }, 500)
+      } else {
+        toast.error(result.error || 'Invalid tax code PIN')
+        setTaxCodePin('')
+      }
+    } catch (error) {
+      console.error('Error validating tax PIN:', error)
+      toast.error('Failed to verify tax code PIN')
+    } finally {
+      setIsValidatingPin(false)
     }
   }
 
-  const handleWithdrawalPinSubmit = () => {
-    if (withdrawalPin.length === 6) {
-      setWaitingForWithdrawalPin(false)
-      setProgressMessage('Finalizing withdrawal...')
-      // Continue to completion
-      setTimeout(() => {
-        setProgress(95)
-      }, 500)
+  const handleWithdrawalPinSubmit = async () => {
+    if (withdrawalPin.length !== 6) {
+      toast.error('Please enter a 6-digit withdrawal PIN')
+      return
+    }
+
+    setIsValidatingPin(true)
+    try {
+      const result = await validateWithdrawalPinAction(withdrawalPin)
+      
+      if (result.success && result.data) {
+        setWithdrawalPinVerified(true)
+        setWaitingForWithdrawalPin(false)
+        setProgressMessage('Withdrawal PIN verified, finalizing...')
+        toast.success('Withdrawal PIN verified successfully')
+        
+        // Process the actual withdrawal
+        const withdrawalResult = await processWithdrawalAction({
+          symbol: selectedCrypto,
+          name: selectedCryptoData?.name || selectedCrypto,
+          amount: parseFloat(amount),
+          address: address,
+          network: 'Blockchain Network', // You can make this dynamic
+          fee: 0.0005,
+          taxCodePin: taxCodePin,
+          withdrawalPin: withdrawalPin
+        })
+
+        if (withdrawalResult.success) {
+          toast.success('Withdrawal processed successfully!')
+          // Continue to completion
+          setTimeout(() => {
+            setProgress(95)
+          }, 500)
+        } else {
+          toast.error(withdrawalResult.error || 'Failed to process withdrawal')
+          setCurrentStep('form')
+          setIsProcessing(false)
+        }
+      } else {
+        toast.error(result.error || 'Invalid withdrawal PIN')
+        setWithdrawalPin('')
+      }
+    } catch (error) {
+      console.error('Error validating withdrawal PIN:', error)
+      toast.error('Failed to verify withdrawal PIN')
+    } finally {
+      setIsValidatingPin(false)
     }
   }
 
@@ -150,6 +224,9 @@ export function WithdrawForm() {
     setWaitingForTaxPin(false)
     setWaitingForWithdrawalPin(false)
     setShowSuccess(false)
+    setTaxPinVerified(false)
+    setWithdrawalPinVerified(false)
+    setIsValidatingPin(false)
     setAmount('')
     setAddress('')
   }
@@ -231,13 +308,21 @@ export function WithdrawForm() {
                   onChange={(e) => setTaxCodePin(e.target.value)}
                   maxLength={6}
                   className="flex-1"
+                  disabled={isValidatingPin}
                 />
                 <Button 
                   onClick={handleTaxPinSubmit}
-                  disabled={taxCodePin.length !== 6}
+                  disabled={taxCodePin.length !== 6 || isValidatingPin}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
-                  Verify
+                  {isValidatingPin ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify'
+                  )}
                 </Button>
               </div>
             </div>
@@ -261,13 +346,21 @@ export function WithdrawForm() {
                   onChange={(e) => setWithdrawalPin(e.target.value)}
                   maxLength={6}
                   className="flex-1"
+                  disabled={isValidatingPin}
                 />
                 <Button 
                   onClick={handleWithdrawalPinSubmit}
-                  disabled={withdrawalPin.length !== 6}
+                  disabled={withdrawalPin.length !== 6 || isValidatingPin}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  Authorize
+                  {isValidatingPin ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Authorize'
+                  )}
                 </Button>
               </div>
             </div>
@@ -310,11 +403,10 @@ export function WithdrawForm() {
           <label className="text-sm font-medium">Withdrawal Method</label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {withdrawalMethods.map((method) => (
-              <button
+              <div
                 key={method.id}
-                onClick={() => setSelectedMethod(method.id)}
-                disabled={!method.available}
-                className={`p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                onClick={() => method.available && setSelectedMethod(method.id)}
+                className={`p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer ${
                   selectedMethod === method.id
                     ? 'border-primary bg-primary/5'
                     : method.available
@@ -350,7 +442,7 @@ export function WithdrawForm() {
                     Coming Soon
                   </Badge>
                 )}
-              </button>
+              </div>
             ))}
           </div>
         </div>
@@ -359,7 +451,7 @@ export function WithdrawForm() {
           <>
             {/* Cryptocurrency Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Cryptocurrency</label>
+              <label className="text-sm font-medium">Select Cryptocurrency to Withdraw</label>
               <Select value={selectedCrypto} onValueChange={setSelectedCrypto}>
                 <SelectTrigger>
                   <SelectValue />
@@ -377,8 +469,8 @@ export function WithdrawForm() {
                         />
                         <div>
                           <span className="font-medium">{crypto.symbol}</span>
-                          <span className="text-muted-foreground ml-2">
-                            Balance: {crypto.balance}
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {crypto.name}
                           </span>
                         </div>
                       </div>
@@ -386,6 +478,17 @@ export function WithdrawForm() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Portfolio Balance Display */}
+            <div className="bg-muted/50 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Portfolio Balance:</span>
+                <div className="text-right">
+                  <div className="font-semibold">{selectedCryptoData?.balance} {selectedCrypto}</div>
+                  <div className="text-xs text-muted-foreground">Available for withdrawal</div>
+                </div>
+              </div>
             </div>
 
             {/* Amount */}

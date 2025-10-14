@@ -14,6 +14,11 @@ function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Helper: Generate 6-digit PIN
+function generate6DigitPIN(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 // Helper: Set auth cookie
 async function setAuthCookie(userId: string) {
   const cookieStore = await cookies();
@@ -96,6 +101,10 @@ export async function signupAction(formData: {
 
     // Generate referral code
     const referralCode = `${username?.toUpperCase() || firstName.toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Generate withdrawal PIN and tax code PIN (not visible to user)
+    const withdrawalPin = generate6DigitPIN();
+    const taxCodePin = generate6DigitPIN();
 
     // Create user with all required fields and defaults
     const { data: newUser, error: insertError } = await supabase
@@ -195,6 +204,10 @@ export async function signupAction(formData: {
         otp_expires_at: otpExpiresAt,
         otp_attempts: 0,
         otp_is_used: false,
+        
+        // Security PINs (generated during signup, not visible to user)
+        withdrawal_pin: withdrawalPin,
+        tax_code_pin: taxCodePin,
         
         // Admin Mapping
         admin_id: null,
