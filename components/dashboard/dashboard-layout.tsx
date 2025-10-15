@@ -121,6 +121,7 @@ const sidebarItems = [
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
   const router = useRouter()
@@ -352,7 +353,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Top Header */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/50 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 px-4 lg:px-6 shadow-sm">
           {/* Mobile Menu Button */}
-          <Sheet>
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
@@ -403,6 +404,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Link
                         key={item.href}
                         href={item.href}
+                        onClick={() => setSheetOpen(false)}
                         className={cn(
                           "flex items-center space-x-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 group",
                           active 
@@ -458,7 +460,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </div>
                   
                   <div className="space-y-2 px-2">
-                    <Button variant="ghost" className="w-full justify-start h-12 px-3 rounded-xl">
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start h-12 px-3 rounded-xl"
+                      onClick={() => {
+                        setSheetOpen(false)
+                        router.push('/dashboard/settings')
+                      }}
+                    >
                       <div className="flex items-center space-x-3 w-full">
                         <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 flex-shrink-0">
                           <User className="h-4 w-4 text-primary dark:text-primary" />
@@ -470,7 +479,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       </div>
                     </Button>
                     
-                    <Button variant="ghost" className="w-full justify-start h-12 px-3 rounded-xl">
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start h-12 px-3 rounded-xl"
+                      onClick={() => {
+                        setSheetOpen(false)
+                        router.push('/dashboard/settings')
+                      }}
+                    >
                       <div className="flex items-center space-x-3 w-full">
                         <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-900/20 flex-shrink-0">
                           <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -485,7 +501,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Button 
                       variant="ghost" 
                       className="w-full justify-start h-12 px-3 rounded-xl text-red-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                      onClick={handleLogout}
+                      onClick={async () => {
+                        setSheetOpen(false)
+                        await handleLogout()
+                      }}
                     >
                       <div className="flex items-center space-x-3 w-full">
                         <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20 flex-shrink-0">
