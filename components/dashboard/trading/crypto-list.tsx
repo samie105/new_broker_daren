@@ -206,50 +206,55 @@ export function CryptoList({ onPairSelect, selectedPair, onAssetTypeChange }: {
 
   return (
     <Card className="flex flex-col h-full overflow-scroll">
-      <CardHeader className="pb-4 flex-shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <CardTitle className="text-lg">Markets</CardTitle>
+      <CardHeader className="pb-2 sm:pb-4 flex-shrink-0">
+        <div className="flex items-center justify-between mb-2 sm:mb-4">
+          <CardTitle className="text-xs sm:text-sm lg:text-base">Markets</CardTitle>
         </div>
 
         {/* Asset Type Tabs */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-1 sm:gap-2 mb-2 sm:mb-4">
           <Button
             variant={assetType === 'crypto' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleAssetTypeChange('crypto')}
-            className="flex-1"
+            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs px-1 sm:px-2"
           >
-            <Bitcoin className="w-4 h-4 mr-2" />
-            Crypto
+            <Bitcoin className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Crypto</span>
           </Button>
           <Button
             variant={assetType === 'stocks' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleAssetTypeChange('stocks')}
-            className="flex-1"
+            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs px-1 sm:px-2"
           >
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Stocks
+            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Stocks</span>
           </Button>
           <Button
             variant={assetType === 'currencies' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleAssetTypeChange('currencies')}
-            className="flex-1"
+            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs px-1 sm:px-2"
           >
-            <DollarSign className="w-4 h-4 mr-2" />
-            Forex
+            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Forex</span>
           </Button>
         </div>
         
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input placeholder="Search markets..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+          <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3 sm:w-4 sm:h-4" />
+          <Input 
+            placeholder="Search markets..." 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)} 
+            className="pl-7 sm:pl-10 h-7 sm:h-9 text-xs sm:text-sm" 
+          />
         </div>
       </CardHeader>
 
       <CardContent className="flex-1 max-h-[700px] overflow-hidden/ p-0">
-        <div className="grid grid-cols-12 gap-3 px-4 py-4 border-b border-border/50 bg-muted/60 text-xs font-semibold text-foreground/80 uppercase tracking-wide sticky top-0 z-10">
+        <div className="grid grid-cols-12 gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-4 border-b border-border/50 bg-muted/60 text-[9px] sm:text-xs font-semibold text-foreground/80 uppercase tracking-wide sticky top-0 z-10">
           <div className="col-span-1"></div>
           <div className="col-span-5 text-left">Asset</div>
           <div className="col-span-3 text-right">Price</div>
@@ -259,35 +264,35 @@ export function CryptoList({ onPairSelect, selectedPair, onAssetTypeChange }: {
         <div className="overflow-y-auto /max-h-[calc(700px-60px)]">{filteredCryptos.map((crypto, index) => (
             <div
               key={`${crypto.symbol}-${index}`}
-              className={`grid grid-cols-12 gap-3 px-4 py-4 border-b border-border/10 hover:bg-muted/30 transition-all duration-200 group cursor-pointer ${
+              className={`grid grid-cols-12 gap-1 sm:gap-3 px-2 sm:px-4 py-2 sm:py-4 border-b border-border/10 hover:bg-muted/30 transition-all duration-200 group cursor-pointer ${
                 selectedPair === crypto.pair ? 'bg-primary/5 border-l-4 border-l-primary' : ''
               }`}
               onClick={() => handleRowClick(crypto.pair, crypto.symbol)}
             >
               <div className="col-span-1 flex items-center">
-                <Button variant="ghost" size="sm" className="w-6 h-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" 
+                <Button variant="ghost" size="sm" className="w-5 h-5 sm:w-6 sm:h-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" 
                   onClick={(e) => { e.stopPropagation(); toggleFavorite(crypto.symbol) }}>
                   {favorites.includes(crypto.symbol) ? (
-                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-500 fill-current" />
                   ) : (
-                    <StarOff className="w-3 h-3 text-muted-foreground" />
+                    <StarOff className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-muted-foreground" />
                   )}
                 </Button>
               </div>
 
-              <div className="col-span-5 flex items-center space-x-3">
-                <div className="relative w-8 h-8 flex-shrink-0">
+              <div className="col-span-5 flex items-center space-x-1.5 sm:space-x-3">
+                <div className="relative w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0">
                   <Image src={crypto.icon} alt={crypto.symbol} fill className="rounded-full" 
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm text-foreground">{crypto.symbol}</div>
-                  <div className="text-xs text-muted-foreground truncate">{crypto.name}</div>
+                  <div className="font-semibold text-[10px] sm:text-sm text-foreground">{crypto.symbol}</div>
+                  <div className="text-[9px] sm:text-xs text-muted-foreground truncate">{crypto.name}</div>
                 </div>
               </div>
 
               <div className="col-span-3 flex items-center justify-end">
-                <div className="text-sm font-semibold text-foreground">
+                <div className="text-[10px] sm:text-sm font-semibold text-foreground">
                   ${crypto.price < 1 
                     ? crypto.price.toFixed(6).replace(/\.?0+$/, '')
                     : crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -297,7 +302,7 @@ export function CryptoList({ onPairSelect, selectedPair, onAssetTypeChange }: {
 
               <div className="col-span-3 flex items-center justify-end">
                 <Button size="sm" variant="outline" 
-                  className="text-xs px-3 py-1 h-7"
+                  className="text-[9px] sm:text-xs px-1.5 sm:px-3 py-0.5 sm:py-1 h-5 sm:h-7"
                   onClick={(e) => handleTradeClick(crypto.pair, crypto.symbol, e)}>
                   Trade
                 </Button>

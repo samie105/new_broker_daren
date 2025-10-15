@@ -506,7 +506,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Search and Mobile Notifications */}
           <div className="flex items-center flex-1 max-w-md space-x-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -trans˜late-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search cryptocurrencies, transactions..."
                 className="pl-10 bg-muted/50 border-0 focus-visible:ring-1 h-9"

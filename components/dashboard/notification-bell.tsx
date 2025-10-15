@@ -13,6 +13,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
 import { 
   getNotificationsAction, 
@@ -42,7 +52,21 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024) // lg breakpoint
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Fetch notifications
   const fetchNotifications = async () => {
@@ -155,6 +179,202 @@ export function NotificationBell() {
     return date.toLocaleDateString()
   }
 
+  // Render notification list content
+  const renderNotificationList = () => (
+    <ScrollArea className={cn(isMobile ? "h-[60vh]" : "h-[400px]")}>
+      {loading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+        </div>
+      ) : notifications.length === 0 ? (
+        // Empty State
+        <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+            <Bell className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 className="font-semibold text-lg mb-2">No notifications</h3>
+          <p className="text-sm text-muted-foreground max-w-[280px]">
+            You're all caught up! We'll notify you when something important happens.
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              onClick={() => handleNotificationClick(notification)}
+              className={cn(
+                "p-4 transition-colors relative group",
+                notification.is_read 
+                  ? "hover:bg-accent/50" 
+                  : "bg-primary/5 hover:bg-primary/10",
+                notification.action_url && "cursor-pointer"
+              )}
+            >
+              {/* Unread indicator */}
+              {!notification.is_read && (
+                <div className="absolute left-2 top-6 w-2 h-2 bg-primary rounded-full" />
+              )}
+
+              <div className="flex gap-3 pl-3">
+                {/* Icon */}
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-background flex items-center justify-center text-xl">
+                  {notification.icon || notificationIcons[notification.type]}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className={cn(
+                      "text-sm leading-tight",
+                      !notification.is_read && "font-semibold"
+                    )}>
+                      {notification.title}
+                    </h4>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {getRelativeTime(notification.created_at)}
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {notification.message}
+                  </p>
+
+                  {/* Metadata */}
+                  {notification.metadata && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {notification.metadata.amount && (
+                        <span className="font-medium">
+                          ${notification.metadata.amount.toLocaleString()}
+                          {notification.metadata.currency && ` ${notification.metadata.currency}`}
+                        </span>
+                      )}
+                      {notification.metadata.status && (
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {notification.metadata.status}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  {notification.action_url && (
+                    <div className="flex items-center gap-1 text-xs text-primary font-medium pt-1">
+                      <span>View details</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex-shrink-0 flex items-start gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {!notification.is_read && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleMarkAsRead(notification.id)
+                      }}
+                      className="h-7 w-7 p-0"
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleDelete(notification.id, e)}
+                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </ScrollArea>
+  )
+
+  // Mobile version - Drawer
+  if (isMobile) {
+    return (
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerTrigger asChild>
+          <Button variant="ghost" size="sm" className="relative">
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
+            )}
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader className="border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <DrawerTitle>Notifications</DrawerTitle>
+                {unreadCount > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {unreadCount} new
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                {notifications.length > 0 && (
+                  <>
+                    {unreadCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleMarkAllAsRead}
+                        className="h-8 text-xs"
+                      >
+                        <CheckCheck className="w-4 h-4" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearAll}
+                      className="h-8 text-xs text-destructive hover:text-destructive"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </DrawerHeader>
+          
+          {renderNotificationList()}
+          
+          {notifications.length > 0 && (
+            <DrawerFooter className="border-t pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  setDrawerOpen(false)
+                  router.push('/dashboard/notifications')
+                }}
+              >
+                View all notifications
+              </Button>
+            </DrawerFooter>
+          )}
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  // Desktop version - Dropdown
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -209,121 +429,7 @@ export function NotificationBell() {
           </div>
         </div>
 
-        {/* Notifications List */}
-        <ScrollArea className="h-[400px]">
-          {loading ? (
-            <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
-            </div>
-          ) : notifications.length === 0 ? (
-            // Empty State
-            <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Bell className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">No notifications</h3>
-              <p className="text-sm text-muted-foreground max-w-[280px]">
-                You're all caught up! We'll notify you when something important happens.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={cn(
-                    "p-4 transition-colors relative group",
-                    notification.is_read 
-                      ? "hover:bg-accent/50" 
-                      : "bg-primary/5 hover:bg-primary/10",
-                    notification.action_url && "cursor-pointer"
-                  )}
-                >
-                  {/* Unread indicator */}
-                  {!notification.is_read && (
-                    <div className="absolute left-2 top-6 w-2 h-2 bg-primary rounded-full" />
-                  )}
-
-                  <div className="flex gap-3 pl-3">
-                    {/* Icon */}
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-background flex items-center justify-center text-xl">
-                      {notification.icon || notificationIcons[notification.type]}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className={cn(
-                          "text-sm leading-tight",
-                          !notification.is_read && "font-semibold"
-                        )}>
-                          {notification.title}
-                        </h4>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {getRelativeTime(notification.created_at)}
-                        </span>
-                      </div>
-
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {notification.message}
-                      </p>
-
-                      {/* Metadata */}
-                      {notification.metadata && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {notification.metadata.amount && (
-                            <span className="font-medium">
-                              ${notification.metadata.amount.toLocaleString()}
-                              {notification.metadata.currency && ` ${notification.metadata.currency}`}
-                            </span>
-                          )}
-                          {notification.metadata.status && (
-                            <Badge variant="outline" className="text-xs capitalize">
-                              {notification.metadata.status}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-
-                      {notification.action_url && (
-                        <div className="flex items-center gap-1 text-xs text-primary font-medium pt-1">
-                          <span>View details</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex-shrink-0 flex items-start gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!notification.is_read && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleMarkAsRead(notification.id)
-                          }}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Check className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => handleDelete(notification.id, e)}
-                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+        {renderNotificationList()}
 
         {/* Footer */}
         {notifications.length > 0 && (

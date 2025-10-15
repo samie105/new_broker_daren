@@ -23,6 +23,20 @@ interface P2PDepositMethod {
   instructions: string
 }
 
+interface BankTransferInfo {
+  id: string
+  bank_name: string
+  account_name: string
+  account_number: string
+  routing_number?: string
+  swift_code?: string
+  iban?: string
+  bank_address?: string
+  is_active: boolean
+  instructions?: string
+  icon?: string
+}
+
 interface ApiResponse<T = any> {
   success: boolean
   data?: T
@@ -91,6 +105,41 @@ export async function getP2PDepositMethodsAction(): Promise<ApiResponse<P2PDepos
     }
   } catch (error: any) {
     console.error('❌ Error in getP2PDepositMethodsAction:', error)
+    return {
+      success: false,
+      error: error.message || 'An error occurred',
+      data: []
+    }
+  }
+}
+
+// GET BANK TRANSFER INFO
+export async function getBankTransferInfoAction(): Promise<ApiResponse<BankTransferInfo[]>> {
+  try {
+    const { data: admin, error } = await supabase
+      .from('admins')
+      .select('bank_transfer_info')
+      .limit(1)
+      .single()
+
+    if (error) {
+      console.error('❌ Error fetching bank transfer info:', error)
+      return {
+        success: false,
+        error: 'Failed to fetch bank transfer information',
+        data: []
+      }
+    }
+
+    const bankInfo = (admin as any)?.bank_transfer_info || []
+    const activeInfo = bankInfo.filter((info: BankTransferInfo) => info.is_active)
+
+    return {
+      success: true,
+      data: activeInfo
+    }
+  } catch (error: any) {
+    console.error('❌ Error in getBankTransferInfoAction:', error)
     return {
       success: false,
       error: error.message || 'An error occurred',
