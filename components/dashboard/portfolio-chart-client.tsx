@@ -127,10 +127,10 @@ export function PortfolioChartClient({ data }: PortfolioChartClientProps) {
               </Select>
             </div>
             
-            {/* More Options */}
+            {/* More Options - Desktop Only */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="hidden sm:flex">
                   <MoreHorizontal className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>

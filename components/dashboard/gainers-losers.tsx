@@ -58,7 +58,7 @@ export function GainersLosers() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">Market Movers</CardTitle>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <Button
               variant="ghost"
               size="sm"
@@ -68,24 +68,24 @@ export function GainersLosers() {
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               <Button
                 variant={activeTab === 'gainers' ? 'default' : 'outline'}
                 size="sm"
-                className="flex-1"
+                className="h-8 px-2 sm:px-3"
                 onClick={() => setActiveTab('gainers')}
               >
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Top Gainers
+                <TrendingUp className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Top Gainers</span>
               </Button>
               <Button
                 variant={activeTab === 'losers' ? 'default' : 'outline'}
                 size="sm"
-                className="flex-1"
+                className="h-8 px-2 sm:px-3"
                 onClick={() => setActiveTab('losers')}
               >
-                <TrendingDown className="w-4 h-4 mr-2" />
-                Top Losers
+                <TrendingDown className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Top Losers</span>
               </Button>
             </div>
           </div>
