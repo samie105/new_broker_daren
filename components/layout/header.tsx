@@ -83,7 +83,7 @@ export function Header() {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-white font-bold text-lg">C</span>
             </div>
-            <span className="text-xl font-bold text-primary">CryptoVault</span>
+            <span className="text-xl font-bold text-primary">Trans-Atlantic Capitals</span>
           </div>
 
           {/* Desktop Navigation */}

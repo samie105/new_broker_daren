@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { CreditCard, FileText, Upload, X, CheckCircle } from 'lucide-react'
-import Image from 'next/image'
+import { CreditCard, FileText, Upload, X, CheckCircle, Loader2 } from 'lucide-react'
 import { DatePicker } from '@/components/ui/datefield-rac'
+import { uploadVerificationDocumentAction, submitVerificationAction } from '@/server/actions/verification'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 const idTypes = [
   {
@@ -39,6 +41,11 @@ export function VerificationForm() {
   const [backImage, setBackImage] = useState<string | null>(null)
   const [frontFileName, setFrontFileName] = useState<string>('')
   const [backFileName, setBackFileName] = useState<string>('')
+  const [frontImageUrl, setFrontImageUrl] = useState<string>('')
+  const [backImageUrl, setBackImageUrl] = useState<string>('')
+  const [uploading, setUploading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const router = useRouter()
   
   // Form fields
   const [formData, setFormData] = useState({
@@ -71,43 +78,119 @@ export function VerificationForm() {
     })
   }
 
-  const handleFileUpload = (file: File | null, side: 'front' | 'back') => {
+  const handleFileUpload = async (file: File | null, side: 'front' | 'back') => {
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      if (side === 'front') {
-        setFrontImage(reader.result as string)
-        setFrontFileName(file.name)
-      } else {
-        setBackImage(reader.result as string)
-        setBackFileName(file.name)
-      }
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB')
+      return
     }
-    reader.readAsDataURL(file)
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Only JPG, PNG, and PDF are allowed')
+      return
+    }
+
+    setUploading(true)
+
+    try {
+      // Upload to Supabase Storage
+      const result = await uploadVerificationDocumentAction(file, side)
+
+      if (!result.success || !result.data) {
+        toast.error(result.error || 'Failed to upload document')
+        return
+      }
+
+      // Set preview and URL
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        if (side === 'front') {
+          setFrontImage(reader.result as string)
+          setFrontFileName(file.name)
+          setFrontImageUrl(result.data!.url)
+        } else {
+          setBackImage(reader.result as string)
+          setBackFileName(file.name)
+          setBackImageUrl(result.data!.url)
+        }
+      }
+      reader.readAsDataURL(file)
+
+      toast.success(`${side === 'front' ? 'Front' : 'Back'} side uploaded successfully`)
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload document')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const clearImage = (side: 'front' | 'back') => {
     if (side === 'front') {
       setFrontImage(null)
       setFrontFileName('')
+      setFrontImageUrl('')
       if (frontInputRef.current) frontInputRef.current.value = ''
     } else {
       setBackImage(null)
       setBackFileName('')
+      setBackImageUrl('')
       if (backInputRef.current) backInputRef.current.value = ''
     }
   }
 
-  const handleSubmit = () => {
-    // Implement submission logic
-    console.log('Submitting verification:', {
-      idType: selectedIdType,
-      formData,
-      frontImage,
-      backImage
-    })
-    alert('Verification submitted successfully!')
+  const handleSubmit = async () => {
+    if (!selectedIdType) {
+      toast.error('Please select an ID type')
+      return
+    }
+
+    if (!frontImageUrl) {
+      toast.error('Please upload the front side of your ID')
+      return
+    }
+
+    if (selectedType?.requiresBack && !backImageUrl) {
+      toast.error('Please upload the back side of your ID')
+      return
+    }
+
+    if (!isFormValid()) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      const result = await submitVerificationAction({
+        id_type: selectedIdType as 'passport' | 'drivers-license' | 'national-id',
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        id_number: formData.idNumber,
+        date_of_birth: formData.dateOfBirth,
+        address: formData.address,
+        city: formData.city,
+        country: formData.country,
+        postal_code: formData.postalCode,
+        front_image_url: frontImageUrl,
+        back_image_url: backImageUrl || undefined,
+      })
+
+      if (result.success) {
+        toast.success('Verification submitted successfully!')
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Failed to submit verification')
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to submit verification')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const isFormValid = () => {
@@ -123,7 +206,7 @@ export function VerificationForm() {
     )
   }
 
-  const canSubmit = selectedIdType && frontImage && (!selectedType?.requiresBack || backImage) && isFormValid()
+  const canSubmit = selectedIdType && frontImageUrl && (!selectedType?.requiresBack || backImageUrl) && isFormValid() && !uploading && !submitting
 
   return (
     <div className="space-y-6">
@@ -140,10 +223,10 @@ export function VerificationForm() {
               const isSelected = selectedIdType === idType.id
               
               return (
-                <button
+                <div
                   key={idType.id}
                   onClick={() => setSelectedIdType(idType.id)}
-                  className={`p-4 rounded-lg border transition-all text-left ${
+                  className={`p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
                     isSelected
                       ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50 hover:bg-muted/50'
@@ -165,7 +248,7 @@ export function VerificationForm() {
                       <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                     )}
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
@@ -433,7 +516,14 @@ export function VerificationForm() {
               disabled={!canSubmit}
               onClick={handleSubmit}
             >
-              Submit for Verification
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit for Verification'
+              )}
             </Button>
           </CardContent>
         </Card>

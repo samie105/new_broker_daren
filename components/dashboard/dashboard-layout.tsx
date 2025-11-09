@@ -187,7 +187,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
                   <span className="text-white font-bold text-lg">C</span>
                 </div>
-                <span className="text-xl font-bold gradient-text">CryptoVault</span>
+                <span className="text-xl font-bold gradient-text">Trans-Atlantic Capitals</span>
               </Link>
             )}
             
@@ -371,7 +371,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
                       <span className="text-white font-bold text-lg">C</span>
                     </div>
-                    <span className="text-xl font-bold gradient-text">CryptoVault</span>
+                    <span className="text-xl font-bold gradient-text">Trans-Atlantic Capitals</span>
                   </Link>
                 </div>
 

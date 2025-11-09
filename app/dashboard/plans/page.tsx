@@ -3,7 +3,7 @@ import { getSubscriptionPlansAction, getUserSubscriptionAction } from '@/server/
 import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'Subscription Plans | CryptoVault',
+  title: 'Subscription Plans | Trans-Atlantic Capitals',
   description: 'Choose the perfect plan for your trading needs',
 }
 

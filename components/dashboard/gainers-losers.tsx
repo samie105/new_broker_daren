@@ -33,6 +33,9 @@ export function GainersLosers() {
   }, [])
   
   const formatPrice = (price: number) => {
+    if (!price || price === null || price === undefined) {
+      return '0.00'
+    }
     if (price < 0.001) {
       return price.toFixed(8)
     } else if (price < 1) {
@@ -48,6 +51,9 @@ export function GainersLosers() {
   }
 
   const formatChange = (change: number) => {
+    if (!change || change === null || change === undefined) {
+      return '0.00%'
+    }
     return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`
   }
 

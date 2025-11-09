@@ -7,27 +7,66 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MessageCircle, Mail, MessagesSquare, Send, Phone } from 'lucide-react'
 
-export function HelpSupport() {
+interface Contact {
+  id: string
+  type: string
+  label: string
+  value: string
+  icon: string
+}
+
+interface HelpSupportProps {
+  contacts: Contact[]
+}
+
+export function HelpSupport({ contacts }: HelpSupportProps) {
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
 
-  const handleWhatsAppSupport = () => {
-    // Replace with your actual WhatsApp number
-    const phoneNumber = '1234567890' // Format: country code + number without + or spaces
-    const text = encodeURIComponent('Hello, I need help with my account')
-    window.open(`https://wa.me/${phoneNumber}?text=${text}`, '_blank')
+  const handleContactClick = (contact: Contact) => {
+    switch (contact.type) {
+      case 'whatsapp':
+        const phoneNumber = contact.value.replace(/[^0-9]/g, '')
+        const text = encodeURIComponent('Hello, I need help with my account')
+        window.open(`https://wa.me/${phoneNumber}?text=${text}`, '_blank')
+        break
+      case 'email':
+        const subject = encodeURIComponent('Support Request')
+        const body = encodeURIComponent(message || 'Please describe your issue here')
+        window.location.href = `mailto:${contact.value}?subject=${subject}&body=${body}`
+        break
+      case 'telegram':
+        window.open(`https://t.me/${contact.value}`, '_blank')
+        break
+      case 'phone':
+        window.location.href = `tel:${contact.value}`
+        break
+      case 'live_chat':
+        alert('Live chat feature coming soon!')
+        break
+    }
   }
 
-  const handleEmailSupport = () => {
-    const subject = encodeURIComponent('Support Request')
-    const body = encodeURIComponent(message || 'Please describe your issue here')
-    window.location.href = `mailto:support@broker.com?subject=${subject}&body=${body}`
+  const getIconComponent = (type: string) => {
+    const iconMap: Record<string, any> = {
+      email: Mail,
+      phone: Phone,
+      whatsapp: MessageCircle,
+      telegram: Send,
+      live_chat: MessagesSquare,
+    }
+    return iconMap[type] || MessageCircle
   }
 
-  const handleLiveChat = () => {
-    // Implement your live chat integration here
-    console.log('Opening live chat...')
-    alert('Live chat feature coming soon!')
+  const getColorClass = (type: string) => {
+    const colorMap: Record<string, string> = {
+      email: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600',
+      phone: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600',
+      whatsapp: 'bg-green-50 dark:bg-green-900/20 text-green-600',
+      telegram: 'bg-sky-50 dark:bg-sky-900/20 text-sky-600',
+      live_chat: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600',
+    }
+    return colorMap[type] || 'bg-gray-50 dark:bg-gray-900/20 text-gray-600'
   }
 
   return (
@@ -40,110 +79,60 @@ export function HelpSupport() {
             <CardDescription>Choose your preferred way to reach us</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* WhatsApp Support */}
-            <button
-              onClick={handleWhatsAppSupport}
-              className="w-full p-4 border rounded-lg hover:bg-muted/50 transition-colors text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
-                  <MessageCircle className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">WhatsApp Support</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Chat with us on WhatsApp
-                  </p>
-                </div>
-                <Send className="w-4 h-4 text-muted-foreground" />
-              </div>
-            </button>
-
-            {/* Email Support */}
-            <button
-              onClick={handleEmailSupport}
-              className="w-full p-4 border rounded-lg hover:bg-muted/50 transition-colors text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                  <Mail className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Email Support</h3>
-                  <p className="text-sm text-muted-foreground">
-                    support@broker.com
-                  </p>
-                </div>
-                <Send className="w-4 h-4 text-muted-foreground" />
-              </div>
-            </button>
-
-            {/* Live Chat */}
-            <button
-              onClick={handleLiveChat}
-              className="w-full p-4 border rounded-lg hover:bg-muted/50 transition-colors text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20">
-                  <MessagesSquare className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Live Chat</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Chat with our support team now
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs text-green-600 font-medium">Online</span>
-                </div>
-              </div>
-            </button>
-
-            {/* Phone Support */}
-            <div className="p-4 border rounded-lg bg-muted/30">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20">
-                  <Phone className="w-6 h-6 text-orange-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Phone Support</h3>
-                  <p className="text-sm text-muted-foreground">
-                    +1 (800) 123-4567
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Mon-Fri, 9AM-6PM EST
-                  </p>
-                </div>
-              </div>
-            </div>
+            {contacts.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No contact methods available at the moment.
+              </p>
+            ) : (
+              contacts.map((contact) => {
+                const IconComponent = getIconComponent(contact.type)
+                return (
+                  <button
+                    key={contact.id}
+                    onClick={() => handleContactClick(contact)}
+                    className="w-full p-4 border rounded-lg hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-lg ${getColorClass(contact.type)}`}>
+                        {contact.icon ? (
+                          <span className="text-2xl">{contact.icon}</span>
+                        ) : (
+                          <IconComponent className="w-6 h-6" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{contact.label}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {contact.value}
+                        </p>
+                      </div>
+                      <Send className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </button>
+                )
+              })
+            )}
           </CardContent>
         </Card>
 
-        {/* Support Hours */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Support Hours</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Live Chat</span>
-              <span className="text-sm font-medium">24/7</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">WhatsApp</span>
-              <span className="text-sm font-medium">24/7</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Email</span>
-              <span className="text-sm font-medium">24/7 (Response within 24hrs)</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Phone</span>
-              <span className="text-sm font-medium">Mon-Fri, 9AM-6PM EST</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Support Info */}
+        {contacts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Support Availability</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {contacts.map((contact) => (
+                <div key={contact.id} className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground capitalize">
+                    {contact.label}
+                  </span>
+                  <span className="text-sm font-medium">24/7</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Quick Message Form */}
@@ -176,29 +165,24 @@ export function HelpSupport() {
             />
           </div>
 
-          <Button className="w-full" onClick={handleEmailSupport}>
+          <Button
+            className="w-full"
+            onClick={() => {
+              const emailContact = contacts.find((c) => c.type === 'email')
+              if (emailContact) handleContactClick(emailContact)
+            }}
+          >
             <Send className="w-4 h-4 mr-2" />
             Send Message
           </Button>
 
-          <div className="pt-4 border-t">
-            <p className="text-sm text-muted-foreground text-center">
-              For urgent matters, please use{' '}
-              <button
-                onClick={handleWhatsAppSupport}
-                className="text-green-600 hover:underline font-medium"
-              >
-                WhatsApp
-              </button>
-              {' '}or{' '}
-              <button
-                onClick={handleLiveChat}
-                className="text-purple-600 hover:underline font-medium"
-              >
-                Live Chat
-              </button>
-            </p>
-          </div>
+          {contacts.length > 0 && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground text-center">
+                For urgent matters, please use one of the contact methods above
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

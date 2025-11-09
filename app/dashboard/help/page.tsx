@@ -2,8 +2,17 @@ import React from 'react'
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { HelpSupport } from '@/components/dashboard/help/help-support'
 import { HelpFAQ } from '@/components/dashboard/help/help-faq'
+import { getPublishedFaqsAction, getActiveContactsAction } from '@/server/actions/support'
 
-export default function HelpPage() {
+export default async function HelpPage() {
+  const [faqsResult, contactsResult] = await Promise.all([
+    getPublishedFaqsAction(),
+    getActiveContactsAction(),
+  ])
+
+  const faqs = faqsResult.success ? faqsResult.data : []
+  const contacts = contactsResult.success ? contactsResult.data : []
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -16,10 +25,10 @@ export default function HelpPage() {
         </div>
 
         {/* Support Options */}
-        <HelpSupport />
+        <HelpSupport contacts={contacts || []} />
 
         {/* FAQ Section */}
-        <HelpFAQ />
+        <HelpFAQ faqs={faqs || []} />
       </div>
     </DashboardLayout>
   )

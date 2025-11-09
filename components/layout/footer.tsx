@@ -48,7 +48,7 @@ export function Footer() {
               <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">C</span>
               </div>
-              <span className="text-xl font-bold gradient-text">CryptoVault</span>
+              <span className="text-xl font-bold gradient-text">Trans-Atlantic Capitals</span>
             </div>
             
             <p className="text-muted-foreground max-w-md">
@@ -95,7 +95,7 @@ export function Footer() {
         <div className="mt-16 pt-8 border-t border-border/50">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="text-sm text-muted-foreground">
-              © 2024 CryptoVault. All rights reserved.
+              © 2024 Trans-Atlantic Capitals. All rights reserved.
             </div>
             
             <div className="flex flex-wrap gap-6 text-sm">

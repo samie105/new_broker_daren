@@ -141,11 +141,11 @@ export interface Admin {
   password: string;
   full_name: string | null;
   avatar_url: string | null;
-  is_active: boolean;
+  is_active: boolean | null;
   last_login_at: string | null;
   last_login_ip: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export type AdminInsert = Omit<Admin, 'id' | 'created_at' | 'updated_at'>;
@@ -166,11 +166,21 @@ export interface AuthUser {
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
-  account_tier: string;
-  email_verified: boolean;
+  account_tier: string | null;
+  email_verified: boolean | null;
+}
+
+export interface AdminAuthUser {
+  id: string;
+  email: string;
+  full_name: string | null;
 }
 
 export interface AuthResponse extends ApiResponse<AuthUser> {
+  token?: string;
+}
+
+export interface AdminAuthResponse extends ApiResponse<AdminAuthUser> {
   token?: string;
 }
 

@@ -1143,7 +1143,7 @@ export async function getAdminStakingPlansAction() {
     const stakingPlans = ((admin as any).staking_plans || []) as StakingPlan[]
     
     // Filter only active plans
-    const activePlans = stakingPlans.filter(plan => plan.is_active)
+    const activePlans = stakingPlans.filter((plan: any) => plan.status === 'active')
 
     return {
       success: true,
@@ -1212,7 +1212,7 @@ export async function getAdminInvestmentPlansAction() {
     const investmentPlans = ((admin as any).investment_plans || []) as InvestmentPlan[]
     
     // Filter only active plans
-    const activePlans = investmentPlans.filter(plan => plan.is_active)
+    const activePlans = investmentPlans.filter((plan: any) => plan.status === 'active')
 
     return {
       success: true,

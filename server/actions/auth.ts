@@ -70,7 +70,8 @@ export async function signupAction(formData: {
       .from('users')
       .select('id')
       .eq('email', email)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (existingUser) {
       return {
@@ -85,7 +86,8 @@ export async function signupAction(formData: {
         .from('users')
         .select('id')
         .eq('username', username)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (existingUsername) {
         return {
@@ -234,8 +236,8 @@ export async function signupAction(formData: {
       const { addNotificationAction } = await import('./notifications');
       await addNotificationAction((newUser as any).id, {
         type: 'announcement',
-        title: '🎉 Welcome to CryptoVault!',
-        message: `Hi ${firstName}! Welcome to CryptoVault. We're excited to have you on board. Start by verifying your email and exploring our features.`,
+        title: '🎉 Welcome to Trans-Atlantic Capitals!',
+        message: `Hi ${firstName}! Welcome to Trans-Atlantic Capitals. We're excited to have you on board. Start by verifying your email and exploring our features.`,
         icon: '👋',
         action_url: '/dashboard',
         metadata: {
@@ -279,12 +281,13 @@ export async function loginAction(formData: {
       timestamp: new Date().toISOString(),
     });
 
-    // Find user
+    // Find user - use limit(1).maybeSingle() to handle potential duplicates
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
       .eq('email', email)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     console.log('📊 DATABASE QUERY RESULT:', {
       userFound: !!user,
@@ -501,7 +504,8 @@ export async function forgotPasswordAction(email: string): Promise<ApiResponse> 
       .from('users')
       .select('*')
       .eq('email', email)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (error || !user) {
       // Don't reveal if email exists for security
@@ -557,7 +561,8 @@ export async function resetPasswordAction(formData: {
       .from('users')
       .select('*')
       .eq('email', email)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (error || !user) {
       return {

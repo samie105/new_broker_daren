@@ -1,27 +1,51 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
-
-// Simulated pending verification status - replace with actual API call
-const mockVerificationStatus = {
-  hasPendingRequest: true,
-  status: 'pending', // 'pending' | 'approved' | 'rejected' | 'none'
-  submittedAt: '2024-01-20T10:30:00',
-  idType: 'Passport',
-  reviewMessage: 'Your documents are being reviewed. This typically takes 1-2 business days.'
-}
+import { Clock, CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { getVerificationStatusAction } from '@/server/actions/verification'
 
 export function VerificationStatus() {
-  const { hasPendingRequest, status, submittedAt, idType, reviewMessage } = mockVerificationStatus
+  const [loading, setLoading] = useState(true)
+  const [verification, setVerification] = useState<any>(null)
 
-  if (!hasPendingRequest) {
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const result = await getVerificationStatusAction()
+      if (result.success && result.data) {
+        if (result.data.status !== 'not_started') {
+          setVerification(result.data.data)
+        }
+      }
+      setLoading(false)
+    }
+    fetchStatus()
+  }, [])
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!verification) {
     return null
   }
 
+  const { status, submitted_at, id_type, rejection_reason } = verification
+
   const getStatusConfig = () => {
+    const reviewMessages = {
+      pending: 'Your documents are being reviewed. This typically takes 1-2 business days.',
+      approved: 'Your identity has been verified successfully! You now have access to all trading features.',
+      rejected: rejection_reason || 'Your verification was rejected. Please review the reason and submit again with correct documents.'
+    }
+
     switch (status) {
       case 'pending':
         return {
@@ -29,7 +53,8 @@ export function VerificationStatus() {
           color: 'text-orange-600',
           bgColor: 'bg-orange-50 dark:bg-orange-900/20',
           borderColor: 'border-orange-200 dark:border-orange-800',
-          badge: <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">Pending Review</Badge>
+          badge: <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">Pending Review</Badge>,
+          message: reviewMessages.pending
         }
       case 'approved':
         return {
@@ -37,7 +62,8 @@ export function VerificationStatus() {
           color: 'text-emerald-600',
           bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
           borderColor: 'border-emerald-200 dark:border-emerald-800',
-          badge: <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Approved</Badge>
+          badge: <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Approved</Badge>,
+          message: reviewMessages.approved
         }
       case 'rejected':
         return {
@@ -45,7 +71,8 @@ export function VerificationStatus() {
           color: 'text-red-600',
           bgColor: 'bg-red-50 dark:bg-red-900/20',
           borderColor: 'border-red-200 dark:border-red-800',
-          badge: <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Rejected</Badge>
+          badge: <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Rejected</Badge>,
+          message: reviewMessages.rejected
         }
       default:
         return {
@@ -53,13 +80,19 @@ export function VerificationStatus() {
           color: 'text-blue-600',
           bgColor: 'bg-blue-50 dark:bg-blue-900/20',
           borderColor: 'border-blue-200 dark:border-blue-800',
-          badge: <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">In Progress</Badge>
+          badge: <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">In Progress</Badge>,
+          message: 'Your verification is being processed.'
         }
     }
   }
 
   const config = getStatusConfig()
   const StatusIcon = config.icon
+
+  // Format ID type for display
+  const idTypeDisplay = id_type.split('-').map((word: string) => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ')
 
   return (
     <Card className={`border ${config.borderColor}`}>
@@ -81,17 +114,17 @@ export function VerificationStatus() {
                 <div className="hidden md:block">{config.badge}</div>
               </div>
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">{reviewMessage}</p>
+                <p className="text-sm text-muted-foreground">{config.message}</p>
                 <div className="flex flex-wrap gap-6 text-sm">
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">Document Type:</span>
-                    <span className="font-semibold text-foreground">{idType}</span>
+                    <span className="font-semibold text-foreground">{idTypeDisplay}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">Submitted:</span>
-                    <time className="font-semibold text-foreground" dateTime={submittedAt}>
+                    <time className="font-semibold text-foreground" dateTime={submitted_at}>
                       {(() => {
-                        const date = new Date(submittedAt)
+                        const date = new Date(submitted_at)
                         const now = new Date()
                         const diffTime = Math.abs(now.getTime() - date.getTime())
                         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
