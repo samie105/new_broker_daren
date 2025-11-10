@@ -87,6 +87,26 @@ export async function requireAdmin(): Promise<AdminUser> {
   const adminUser = await getAdminUser()
   
   if (!adminUser) {
+    // Check if this is a regular user trying to access admin area
+    const adminId = await getAdminIdFromCookie()
+    if (adminId) {
+      // They have a session cookie but not in admins table
+      // Check if they're a regular user
+      const supabase = createServerSupabase()
+      const { data: regularUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', adminId)
+        .limit(1)
+        .maybeSingle()
+      
+      if (regularUser) {
+        // This is a regular user, not an admin - redirect to dashboard
+        redirect('/dashboard')
+      }
+    }
+    
+    // Not logged in or session expired - redirect to admin login
     redirect('/admin-login')
   }
 

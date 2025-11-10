@@ -30,6 +30,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import Image from 'next/image'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,18 +184,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             sidebarCollapsed ? "justify-center px-2" : "justify-between px-4"
           )}>
             {!sidebarCollapsed && (
-              <Link href="/" className="flex items-center space-x-2 group">
-                <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                  <span className="text-white font-bold text-lg">C</span>
-                </div>
-                <span className="text-xl font-bold gradient-text">Trans-Atlantic Capitals</span>
+              <Link href="/" className="flex items-center group px-2">
+                <Image 
+                  src="/assets/apcaplogo.png" 
+                  alt="Apcap Logo" 
+                  width={100} 
+                  height={21}
+                  className="h-5 w-auto"
+                  priority
+                />
               </Link>
             )}
             
             {sidebarCollapsed && (
               <Link href="/" className="group">
                 <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                  <span className="text-white font-bold text-lg">C</span>
+                  <span className="text-white font-bold text-lg">A</span>
                 </div>
               </Link>
             )}
@@ -367,11 +372,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="flex h-full flex-col">
                 {/* Logo in Sheet */}
                 <div className="flex h-16 items-center justify-center px-6 border-b border-border/50 bg-muted/30">
-                  <Link href="/" className="flex items-center space-x-2 group">
-                    <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                      <span className="text-white font-bold text-lg">C</span>
-                    </div>
-                    <span className="text-xl font-bold gradient-text">Trans-Atlantic Capitals</span>
+                  <Link href="/" className="flex items-center group">
+                    <Image 
+                      src="/assets/apcaplogo.png" 
+                      alt="Apcap Logo" 
+                      width={100} 
+                      height={21}
+                      className="h-5 w-auto"
+                    />
                   </Link>
                 </div>
 

@@ -12,7 +12,7 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: 'Trans-Atlantic Capitals - Secure Digital Currency Exchange',
+  title: 'Atlantic Pacific Capitals - Secure Digital Currency Exchange',
   description: 'Trade, buy, and sell cryptocurrencies with confidence. Advanced security, real-time data, and seamless trading experience.',
 }
 

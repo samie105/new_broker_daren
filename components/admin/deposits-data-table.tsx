@@ -24,16 +24,17 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 
 interface Deposit {
-  id: string
+  id: number
   user_id: string
+  user_name: string
+  user_email: string
   amount: number
+  symbol: string
+  value: number
   status: string
-  created_at: string
-  users: {
-    first_name: string
-    last_name: string
-    email: string
-  }
+  date: string
+  confirmations?: string
+  tx_hash?: string
 }
 
 interface DepositsDataTableProps {
@@ -46,11 +47,11 @@ export function DepositsDataTable({ deposits }: DepositsDataTableProps) {
   const [rejectReason, setRejectReason] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleApprove = async (depositId: string) => {
+  const handleApprove = async (userId: string, depositId: number) => {
     if (!confirm('Are you sure you want to approve this deposit?')) return
 
     setLoading(true)
-    const result = await approveDepositAction(depositId)
+    const result = await approveDepositAction(userId, depositId)
     setLoading(false)
 
     if (result.success) {
@@ -69,7 +70,7 @@ export function DepositsDataTable({ deposits }: DepositsDataTableProps) {
     }
 
     setLoading(true)
-    const result = await rejectDepositAction(selectedDeposit.id, rejectReason)
+    const result = await rejectDepositAction(selectedDeposit.user_id, selectedDeposit.id, rejectReason)
     setLoading(false)
 
     if (result.success) {
@@ -115,20 +116,25 @@ export function DepositsDataTable({ deposits }: DepositsDataTableProps) {
                 <TableRow key={deposit.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium">
-                        {(deposit.users as any)?.first_name} {(deposit.users as any)?.last_name}
-                      </p>
+                      <p className="font-medium">{deposit.user_name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {(deposit.users as any)?.email}
+                        {deposit.user_email}
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="font-semibold">
-                    ${deposit.amount.toFixed(2)}
+                  <TableCell>
+                    <div>
+                      <p className="font-semibold">
+                        {deposit.amount} {deposit.symbol}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        ${deposit.value.toLocaleString()}
+                      </p>
+                    </div>
                   </TableCell>
                   <TableCell>{getStatusBadge(deposit.status)}</TableCell>
                   <TableCell>
-                    {new Date(deposit.created_at).toLocaleDateString()}
+                    {new Date(deposit.date).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
                     {deposit.status === 'pending' && (
@@ -136,7 +142,7 @@ export function DepositsDataTable({ deposits }: DepositsDataTableProps) {
                         <Button
                           size="sm"
                           variant="default"
-                          onClick={() => handleApprove(deposit.id)}
+                          onClick={() => handleApprove(deposit.user_id, deposit.id)}
                           disabled={loading}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />

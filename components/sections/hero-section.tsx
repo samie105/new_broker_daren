@@ -21,7 +21,7 @@ export function HeroSection() {
   
   const dashboardImage = {
     src: isDark ? '/assets/home/dashboard-darkversion.png' : '/assets/home/dashboard-lightversion.png',
-    alt: `Trans-Atlantic Capitals Dashboard - ${isDark ? 'Dark' : 'Light'} Theme`,
+    alt: `Atlantic Pacific Capitals Dashboard - ${isDark ? 'Dark' : 'Light'} Theme`,
     title: `${isDark ? 'Dark' : 'Light'} Theme Dashboard`
   }
 
@@ -95,7 +95,7 @@ export function HeroSection() {
                       <div className="w-3 h-3 rounded-full bg-green-500"></div>
                     </div>
                     <div className="text-sm font-medium text-foreground">
-                      Trans-Atlantic Capitals Dashboard
+                      Atlantic Pacific Capitals Dashboard
                     </div>
                     <div className="w-16"></div>
                   </div>

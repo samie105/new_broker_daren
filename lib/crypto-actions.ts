@@ -76,27 +76,48 @@ const getCachedCryptoData = unstable_cache(
   async (ids: string[], vsCurrency: string = 'usd') => {
     try {
       const idsParam = ids.join(',')
-      const url = `${COINGECKO_API_BASE}/coins/markets?vs_currency=${vsCurrency}&ids=${idsParam}&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h`
+      // Use the simple/price endpoint as specified
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=${vsCurrency}&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`
+      
+      console.log('📊 Fetching crypto data from CoinGecko:', url)
       
       const response = await fetch(url, {
         headers: {
           'Accept': 'application/json',
         },
+        next: { revalidate: 60 } // Cache for 1 minute
       })
 
       if (!response.ok) {
         throw new Error(`CoinGecko API error: ${response.status}`)
       }
 
-      const data: CryptoData[] = await response.json()
+      const priceData = await response.json()
+      console.log('✅ Fetched crypto prices:', Object.keys(priceData).length, 'cryptos')
+      
+      // Also fetch market data for additional info
+      const marketUrl = `${COINGECKO_API_BASE}/coins/markets?vs_currency=${vsCurrency}&ids=${idsParam}&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h`
+      
+      const marketResponse = await fetch(marketUrl, {
+        headers: {
+          'Accept': 'application/json',
+        },
+        next: { revalidate: 60 }
+      })
+
+      if (!marketResponse.ok) {
+        throw new Error(`CoinGecko API error: ${marketResponse.status}`)
+      }
+
+      const marketData: CryptoData[] = await marketResponse.json()
       
       // Transform data to include our local icons
-      return data.map(crypto => ({
+      return marketData.map(crypto => ({
         ...crypto,
         localIcon: getLocalCryptoIcon(crypto.symbol)
       }))
     } catch (error) {
-      console.error('Error fetching crypto data:', error)
+      console.error('❌ Error fetching crypto data:', error)
       throw error
     }
   },

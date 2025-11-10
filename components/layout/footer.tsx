@@ -2,6 +2,8 @@
 
 import React from 'react'
 import { Github, Twitter, Linkedin, Mail } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
 
 export function Footer() {
   const footerLinks = {
@@ -44,12 +46,15 @@ export function Footer() {
         <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">C</span>
-              </div>
-              <span className="text-xl font-bold gradient-text">Trans-Atlantic Capitals</span>
-            </div>
+            <Link href="/" className="inline-block">
+              <Image 
+                src="/assets/apcaplogo.png" 
+                alt="Apcap Logo" 
+                width={140} 
+                height={29}
+                className="h-7 w-auto"
+              />
+            </Link>
             
             <p className="text-muted-foreground max-w-md">
               The world's most trusted cryptocurrency exchange platform. 
@@ -95,7 +100,7 @@ export function Footer() {
         <div className="mt-16 pt-8 border-t border-border/50">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="text-sm text-muted-foreground">
-              © 2024 Trans-Atlantic Capitals. All rights reserved.
+              © 2024 Atlantic Pacific Capitals. All rights reserved.
             </div>
             
             <div className="flex flex-wrap gap-6 text-sm">

@@ -12,7 +12,8 @@ interface Contact {
   type: string
   label: string
   value: string
-  icon: string
+  is_active?: boolean
+  order_index?: number
 }
 
 interface HelpSupportProps {
@@ -94,11 +95,7 @@ export function HelpSupport({ contacts }: HelpSupportProps) {
                   >
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-lg ${getColorClass(contact.type)}`}>
-                        {contact.icon ? (
-                          <span className="text-2xl">{contact.icon}</span>
-                        ) : (
-                          <IconComponent className="w-6 h-6" />
-                        )}
+                        <IconComponent className="w-6 h-6" />
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold">{contact.label}</h3>

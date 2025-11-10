@@ -21,6 +21,7 @@ export type Database = {
           created_at: string | null
           crypto_deposit_methods: Json | null
           email: string
+          faqs: Json | null
           full_name: string | null
           id: string
           investment_plans: Json | null
@@ -31,6 +32,7 @@ export type Database = {
           password: string
           staking_plans: Json | null
           subscription_plans: Json | null
+          support_contacts: Json | null
           updated_at: string | null
         }
         Insert: {
@@ -39,6 +41,7 @@ export type Database = {
           created_at?: string | null
           crypto_deposit_methods?: Json | null
           email: string
+          faqs?: Json | null
           full_name?: string | null
           id?: string
           investment_plans?: Json | null
@@ -49,6 +52,7 @@ export type Database = {
           password: string
           staking_plans?: Json | null
           subscription_plans?: Json | null
+          support_contacts?: Json | null
           updated_at?: string | null
         }
         Update: {
@@ -57,6 +61,7 @@ export type Database = {
           created_at?: string | null
           crypto_deposit_methods?: Json | null
           email?: string
+          faqs?: Json | null
           full_name?: string | null
           id?: string
           investment_plans?: Json | null
@@ -67,6 +72,7 @@ export type Database = {
           password?: string
           staking_plans?: Json | null
           subscription_plans?: Json | null
+          support_contacts?: Json | null
           updated_at?: string | null
         }
         Relationships: []

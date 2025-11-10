@@ -7,34 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Search, TrendingUp, TrendingDown, RefreshCw, ChevronLeft, ChevronRight, Bitcoin, DollarSign } from 'lucide-react'
 import Image from 'next/image'
 import { getTopCryptos, type CryptoData } from '@/lib/crypto-actions'
+import { getStocks, type StockData } from '@/lib/stock-actions'
 
 type AssetType = 'crypto' | 'stocks' | 'currencies'
 
-// Stock data
-const stockData = [
-  { symbol: 'AAPL', name: 'Apple Inc.', price: 178.25, change: 2.34, marketCap: 2800000000000 },
-  { symbol: 'MSFT', name: 'Microsoft Corp.', price: 412.80, change: 1.89, marketCap: 3100000000000 },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 142.65, change: -0.87, marketCap: 1800000000000 },
-  { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 178.35, change: 3.12, marketCap: 1850000000000 },
-  { symbol: 'NVDA', name: 'NVIDIA Corp.', price: 875.28, change: 5.67, marketCap: 2150000000000 },
-  { symbol: 'TSLA', name: 'Tesla Inc.', price: 242.84, change: -2.45, marketCap: 770000000000 },
-  { symbol: 'META', name: 'Meta Platforms', price: 512.42, change: 1.23, marketCap: 1300000000000 },
-  { symbol: 'NFLX', name: 'Netflix Inc.', price: 485.73, change: 0.98, marketCap: 210000000000 },
-  { symbol: 'AMD', name: 'Advanced Micro Devices', price: 165.89, change: 4.23, marketCap: 268000000000 },
-  { symbol: 'INTC', name: 'Intel Corp.', price: 45.67, change: -1.34, marketCap: 189000000000 },
-  { symbol: 'PYPL', name: 'PayPal Holdings', price: 68.92, change: 0.56, marketCap: 72000000000 },
-  { symbol: 'ADBE', name: 'Adobe Inc.', price: 562.18, change: 2.01, marketCap: 256000000000 },
-  { symbol: 'CRM', name: 'Salesforce Inc.', price: 285.47, change: -0.67, marketCap: 278000000000 },
-  { symbol: 'ORCL', name: 'Oracle Corp.', price: 128.93, change: 1.45, marketCap: 354000000000 },
-  { symbol: 'CSCO', name: 'Cisco Systems', price: 56.84, change: 0.78, marketCap: 232000000000 },
-  { symbol: 'IBM', name: 'IBM Corp.', price: 185.32, change: -0.23, marketCap: 170000000000 },
-  { symbol: 'DIS', name: 'Walt Disney Co.', price: 95.67, change: 1.89, marketCap: 174000000000 },
-  { symbol: 'NKE', name: 'Nike Inc.', price: 108.42, change: -1.12, marketCap: 165000000000 },
-  { symbol: 'BA', name: 'Boeing Co.', price: 187.56, change: 2.67, marketCap: 115000000000 },
-  { symbol: 'JPM', name: 'JPMorgan Chase', price: 198.73, change: 0.89, marketCap: 575000000000 },
-]
-
-// Currency data
+// Currency data (keeping this as static for now)
 const currencyData = [
   { symbol: 'EURUSD', name: 'Euro / US Dollar', price: 1.0842, change: 0.23, marketCap: 0 },
   { symbol: 'GBPUSD', name: 'British Pound / US Dollar', price: 1.2634, change: -0.15, marketCap: 0 },
@@ -57,12 +34,38 @@ const currencyData = [
 export function CryptoPriceList() {
   const [assetType, setAssetType] = useState<AssetType>('crypto')
   const [cryptos, setCryptos] = useState<CryptoData[]>([])
-  const [filteredCryptos, setFilteredCryptos] = useState<CryptoData[]>([])
+  const [stocks, setStocks] = useState<StockData[]>([])
+  const [filteredAssets, setFilteredAssets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(0)
   const itemsPerPage = 8
+
+  // Fetch data on mount and when asset type changes
+  const fetchData = async () => {
+    try {
+      setRefreshing(true)
+      setLoading(true)
+      
+      if (assetType === 'crypto') {
+        const data = await getTopCryptos(50)
+        setCryptos(data)
+      } else if (assetType === 'stocks') {
+        const data = await getStocks()
+        setStocks(data)
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [assetType])
 
   // Get current data based on asset type
   const getCurrentData = () => {
@@ -73,11 +76,16 @@ export function CryptoPriceList() {
         price: crypto.current_price,
         change: crypto.price_change_percentage_24h,
         marketCap: crypto.market_cap,
-        icon: `/assets/crypto/${crypto.symbol.toUpperCase()}.svg`
+        icon: `/assets/crypto/${crypto.symbol.toUpperCase()}.svg`,
+        market_cap_rank: crypto.market_cap_rank
       }))
     } else if (assetType === 'stocks') {
-      return stockData.map(stock => ({
-        ...stock,
+      return stocks.map(stock => ({
+        symbol: stock.symbol,
+        name: stock.name,
+        price: stock.price,
+        change: stock.changePercent,
+        marketCap: stock.marketCap,
         icon: `/assets/stock/${stock.symbol}.svg`
       }))
     } else {
@@ -90,41 +98,17 @@ export function CryptoPriceList() {
 
   const currentData = getCurrentData()
 
-  const fetchCryptos = async () => {
-    try {
-      setRefreshing(true)
-      const data = await getTopCryptos(50) // Get top 50 cryptos
-      setCryptos(data)
-      setFilteredCryptos(data)
-    } catch (error) {
-      console.error('Error fetching crypto data:', error)
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }
-
-  useEffect(() => {
-    if (assetType === 'crypto') {
-      fetchCryptos()
-    } else {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }, [assetType])
-
   useEffect(() => {
     const filtered = currentData.filter(item =>
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.symbol.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    setFilteredCryptos(filtered as any)
+    setFilteredAssets(filtered)
     setCurrentPage(0) // Reset to first page when searching
-  }, [searchQuery, cryptos, assetType])
+  }, [searchQuery, cryptos, stocks, assetType])
 
   const formatPrice = (price: number) => {
     if (assetType === 'currencies') {
-      // Forex pairs need more precision
       return price.toFixed(4)
     }
     if (price < 0.01) {
@@ -151,12 +135,12 @@ export function CryptoPriceList() {
     }
   }
 
-  const paginatedCryptos = filteredCryptos.slice(
+  const paginatedAssets = filteredAssets.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   )
 
-  const totalPages = Math.ceil(filteredCryptos.length / itemsPerPage)
+  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage)
 
   const nextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -181,8 +165,8 @@ export function CryptoPriceList() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={fetchCryptos}
-              disabled={refreshing || assetType !== 'crypto'}
+              onClick={fetchData}
+              disabled={refreshing}
               className="h-8 px-2"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -256,7 +240,7 @@ export function CryptoPriceList() {
           <>
             {/* Asset List */}
             <div className="space-y-2">
-              {paginatedCryptos.map((item: any, index) => (
+              {paginatedAssets.map((item: any, index) => (
                 <div key={item.symbol || index} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2">
@@ -267,7 +251,7 @@ export function CryptoPriceList() {
                       )}
                       <div className="relative w-8 h-8">
                         <Image
-                          src={item.icon || (item.localIcon || `/assets/crypto/${item.symbol.toUpperCase()}.svg`)}
+                          src={item.icon}
                           alt={item.name}
                           fill
                           className="rounded-full object-contain"
@@ -283,17 +267,17 @@ export function CryptoPriceList() {
                   
                   <div className="text-right">
                     <div className="font-medium text-sm">
-                      {formatPrice(item.price || item.current_price)}
+                      {formatPrice(item.price)}
                     </div>
                     <div className={`text-xs flex items-center justify-end ${
-                      (item.change || item.price_change_percentage_24h) >= 0 ? 'text-green-600' : 'text-red-600'
+                      item.change >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {(item.change || item.price_change_percentage_24h) >= 0 ? (
+                      {item.change >= 0 ? (
                         <TrendingUp className="w-3 h-3 mr-1" />
                       ) : (
                         <TrendingDown className="w-3 h-3 mr-1" />
                       )}
-                      {Math.abs(item.change || item.price_change_percentage_24h).toFixed(2)}%
+                      {Math.abs(item.change).toFixed(2)}%
                     </div>
                   </div>
                   
@@ -301,7 +285,7 @@ export function CryptoPriceList() {
                     <div className="text-right hidden sm:block">
                       <div className="text-xs text-muted-foreground">Market Cap</div>
                       <div className="text-sm font-medium">
-                        {formatMarketCap(item.marketCap || item.market_cap)}
+                        {formatMarketCap(item.marketCap)}
                       </div>
                     </div>
                   )}
@@ -313,7 +297,7 @@ export function CryptoPriceList() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
                 <div className="text-sm text-muted-foreground">
-                  Showing {currentPage * itemsPerPage + 1}-{Math.min((currentPage + 1) * itemsPerPage, filteredCryptos.length)} of {filteredCryptos.length}
+                  Showing {currentPage * itemsPerPage + 1}-{Math.min((currentPage + 1) * itemsPerPage, filteredAssets.length)} of {filteredAssets.length}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -339,9 +323,9 @@ export function CryptoPriceList() {
               </div>
             )}
 
-            {filteredCryptos.length === 0 && !loading && (
+            {filteredAssets.length === 0 && !loading && (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No cryptocurrencies found matching your search.</p>
+                <p className="text-muted-foreground">No results found matching your search.</p>
               </div>
             )}
           </>

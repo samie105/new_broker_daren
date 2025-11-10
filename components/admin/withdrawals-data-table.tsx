@@ -33,11 +33,11 @@ export function WithdrawalsDataTable({ withdrawals }: WithdrawalsDataTableProps)
   const [rejectReason, setRejectReason] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleApprove = async (withdrawalId: string) => {
+  const handleApprove = async (userId: string, withdrawalId: number) => {
     if (!confirm('Are you sure you want to approve this withdrawal?')) return
 
     setLoading(true)
-    const result = await approveWithdrawalAction(withdrawalId)
+    const result = await approveWithdrawalAction(userId, withdrawalId)
     setLoading(false)
 
     if (result.success) {
@@ -56,7 +56,7 @@ export function WithdrawalsDataTable({ withdrawals }: WithdrawalsDataTableProps)
     }
 
     setLoading(true)
-    const result = await rejectWithdrawalAction(selectedWithdrawal.id, rejectReason)
+    const result = await rejectWithdrawalAction(selectedWithdrawal.user_id, selectedWithdrawal.id, rejectReason)
     setLoading(false)
 
     if (result.success) {
@@ -102,20 +102,27 @@ export function WithdrawalsDataTable({ withdrawals }: WithdrawalsDataTableProps)
                 <TableRow key={withdrawal.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium">
-                        {withdrawal.users?.first_name} {withdrawal.users?.last_name}
-                      </p>
+                      <p className="font-medium">{withdrawal.user_name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {withdrawal.users?.email}
+                        {withdrawal.user_email}
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="font-semibold">
-                    ${withdrawal.amount.toFixed(2)}
+                  <TableCell>
+                    <div>
+                      <p className="font-semibold">
+                        {withdrawal.amount} {withdrawal.symbol}
+                      </p>
+                      {withdrawal.fee && (
+                        <p className="text-xs text-muted-foreground">
+                          Fee: {withdrawal.fee} {withdrawal.symbol}
+                        </p>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>{getStatusBadge(withdrawal.status)}</TableCell>
                   <TableCell>
-                    {new Date(withdrawal.created_at).toLocaleDateString()}
+                    {new Date(withdrawal.date).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
                     {withdrawal.status === 'pending' && (
@@ -123,7 +130,7 @@ export function WithdrawalsDataTable({ withdrawals }: WithdrawalsDataTableProps)
                         <Button
                           size="sm"
                           variant="default"
-                          onClick={() => handleApprove(withdrawal.id)}
+                          onClick={() => handleApprove(withdrawal.user_id, withdrawal.id)}
                           disabled={loading}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />

@@ -236,8 +236,8 @@ export async function signupAction(formData: {
       const { addNotificationAction } = await import('./notifications');
       await addNotificationAction((newUser as any).id, {
         type: 'announcement',
-        title: '🎉 Welcome to Trans-Atlantic Capitals!',
-        message: `Hi ${firstName}! Welcome to Trans-Atlantic Capitals. We're excited to have you on board. Start by verifying your email and exploring our features.`,
+        title: '🎉 Welcome to Atlantic Pacific Capitals!',
+        message: `Hi ${firstName}! Welcome to Atlantic Pacific Capitals. We're excited to have you on board. Start by verifying your email and exploring our features.`,
         icon: '👋',
         action_url: '/dashboard',
         metadata: {

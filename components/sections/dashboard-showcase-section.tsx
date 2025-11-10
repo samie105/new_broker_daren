@@ -19,7 +19,7 @@ export function DashboardShowcaseSection() {
   
   const dashboardImage = {
     src: isDark ? '/assets/home/dashboard-darkversion.png' : '/assets/home/dashboard-lightversion.png',
-    alt: `Trans-Atlantic Capitals Dashboard - ${isDark ? 'Dark' : 'Light'} Theme`,
+    alt: `Atlantic Pacific Capitals Dashboard - ${isDark ? 'Dark' : 'Light'} Theme`,
     title: `${isDark ? 'Dark' : 'Light'} Theme`,
     description: isDark 
       ? 'Professional dark interface designed for extended trading sessions'

@@ -1,4 +1,4 @@
-# Trans-Atlantic Capitals - Crypto Landing Page
+# Atlantic Pacific Capitals - Crypto Trading Platform
 
 A modern, responsive cryptocurrency exchange landing page built with Next.js 15, Tailwind CSS, and advanced animations.
 
