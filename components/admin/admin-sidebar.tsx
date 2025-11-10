@@ -67,6 +67,13 @@ const navigation = [
     href: '/admin/trades',
     icon: Activity,
   },
+  {
+    name: 'Settings',
+    icon: Settings,
+    children: [
+      { name: 'Deposit Methods', href: '/admin/settings/deposit-methods' },
+    ],
+  },
 ]
 
 export function AdminSidebar({ user }: AdminSidebarProps) {
