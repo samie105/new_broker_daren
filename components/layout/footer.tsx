@@ -61,6 +61,14 @@ export function Footer() {
               Trade with confidence, backed by institutional-grade security and 24/7 support.
             </p>
 
+            {/* Address */}
+            <div className="text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground mb-1">Our Location</p>
+              <p>Neptune Place, Grafton Street</p>
+              <p>Liverpool, L8 5AG</p>
+              <p>United Kingdom</p>
+            </div>
+
             {/* Social Links */}
             <div className="flex space-x-4">
               {socialLinks.map((social) => (

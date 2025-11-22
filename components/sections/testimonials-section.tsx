@@ -17,55 +17,64 @@ export function TestimonialsSection() {
   const testimonials = [
     {
       id: 1,
-      name: "Sarah Chen",
-      role: "Portfolio Manager",
-      company: "Goldman Sachs",
-      content: "The best crypto trading platform I've used. The analytics are incredible and the interface is so intuitive. Made over 40% returns this year.",
+      name: "Elizabeth McLeod",
+      role: "Homeowner",
+      company: "Liverpool",
+      content: "Had Sharon and Tony here today doing deep clean. Really pleased with their work. Here 3 hours and never stopped. Definitely recommend them.",
       rating: 5,
       verified: true
     },
     {
       id: 2,
-      name: "Marcus Rodriguez",
-      role: "Crypto Investor",
-      company: "Independent",
-      content: "Security is top-notch and customer support is fantastic. Been using for 2 years and never had any issues. Highly recommended!",
+      name: "Sher Ee Tan",
+      role: "Regular Client",
+      company: "Liverpool",
+      content: "I've been using Cribs and Spaces Cleaning for my regular fortnightly cleans and have had three sessions so far – all of which have been excellent!",
       rating: 5,
       verified: true
     },
     {
       id: 3,
-      name: "Emily Watson",
-      role: "Fintech Entrepreneur",
-      company: "BlockTech Ventures",
-      content: "The DeFi integration is seamless. Love the advanced charting tools and the mobile app is perfect for trading on the go.",
+      name: "Joseph Fennelly",
+      role: "Homeowner",
+      company: "Liverpool",
+      content: "We've been really impressed with the quality of the house cleaning service – everything is done to a high standard. Communication has been great from the start, and Faith, our cleaner, is consistently reliable and thorough. Highly recommended.",
       rating: 5,
       verified: true
     },
     {
       id: 4,
-      name: "James Liu",
-      role: "Day Trader",
-      company: "Self-employed",
-      content: "Lightning fast execution and the best spreads I've seen. The mobile app is incredibly smooth and reliable.",
+      name: "ellamillz juliet",
+      role: "Customer",
+      company: "Liverpool",
+      content: "Excellent and prompt service—I'm thoroughly impressed!",
       rating: 5,
       verified: true
     },
     {
       id: 5,
-      name: "Priya Patel",
-      role: "Blockchain Developer",
-      company: "Ethereum Foundation",
-      content: "Technical analysis tools are professional grade. API integration is well documented and their uptime is exceptional.",
+      name: "Ahmed Ely El Kory",
+      role: "Customer",
+      company: "Liverpool",
+      content: "It was an amazing experience with you guys and a great job. I'm very satisfied.",
       rating: 5,
       verified: true
     },
     {
       id: 6,
-      name: "Alex Thompson",
-      role: "Investment Analyst",
-      company: "JP Morgan",
-      content: "The staking rewards are competitive and the portfolio tracking features save me hours every week. Excellent platform!",
+      name: "Chuksy Tony",
+      role: "Customer",
+      company: "Liverpool",
+      content: "It was lovely working with the cribs and spaces team. Did a wonderful job for me. I highly recommend.",
+      rating: 5,
+      verified: true
+    },
+    {
+      id: 7,
+      name: "Tuna Mutlu",
+      role: "Tenant",
+      company: "Liverpool",
+      content: "I hired Cribs & Spaces Cleaning Ltd. for an end-of-tenancy cleaning service, and they did an exceptional job. They put in great effort to deep clean the entire property from top to bottom. The bath was so spotless that I barely recognized it—it was shining! The floors, cabinets, kitchen, oven, and fridge were all thoroughly cleaned, and the oven glass was crystal clear.",
       rating: 5,
       verified: true
     }
