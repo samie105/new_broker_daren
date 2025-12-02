@@ -5,6 +5,7 @@ import { Poppins } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Providers } from '@/components/providers'
 import { Toaster } from 'sonner'
+import { JivoChat } from '@/components/jivo-chat'
 
 const poppins = Poppins({ 
   subsets: ['latin'],
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
               theme="system"
               expand={false}
             />
+            <JivoChat />
           </Providers>
         </ThemeProvider>
       </body>

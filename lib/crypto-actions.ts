@@ -85,7 +85,7 @@ const getCachedCryptoData = unstable_cache(
         headers: {
           'Accept': 'application/json',
         },
-        next: { revalidate: 60 } // Cache for 1 minute
+        next: { revalidate: 300 } // Cache for 5 minutes to avoid rate limits
       })
 
       if (!response.ok) {
@@ -102,7 +102,7 @@ const getCachedCryptoData = unstable_cache(
         headers: {
           'Accept': 'application/json',
         },
-        next: { revalidate: 60 }
+        next: { revalidate: 300 } // Cache for 5 minutes to avoid rate limits
       })
 
       if (!marketResponse.ok) {
@@ -123,7 +123,7 @@ const getCachedCryptoData = unstable_cache(
   },
   ['crypto-market-data'],
   {
-    revalidate: 60, // Cache for 1 minute
+    revalidate: 300, // Cache for 5 minutes to avoid rate limits
   }
 )
 

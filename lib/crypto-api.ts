@@ -70,7 +70,7 @@ export async function fetchCryptoPrices(symbols: string[]): Promise<CryptoPrice[
         headers: {
           'Accept': 'application/json',
         },
-        next: { revalidate: 60 } // Cache for 1 minute
+        next: { revalidate: 300 } // Cache for 5 minutes to avoid rate limits
       }
     )
 
