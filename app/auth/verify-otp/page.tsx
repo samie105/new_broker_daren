@@ -81,9 +81,10 @@ function VerifyOtpContent() {
         
         if (result.success) {
           toast.success('Email verified!', {
-            description: 'Your account is now active.',
+            description: 'Your account is now active. Welcome!',
           })
-          router.push('/auth/login?verified=true')
+          // User is already logged in from signup, go directly to dashboard
+          router.push('/dashboard')
         } else {
           toast.error('Verification failed', {
             description: result.error || 'Invalid or expired code.',

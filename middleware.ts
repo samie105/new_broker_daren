@@ -38,8 +38,15 @@ export function middleware(request: NextRequest) {
   }
 
   // If authenticated user tries to access auth pages, redirect to dashboard
+  // BUT allow if coming from dashboard (to prevent redirect loop if session is invalid)
   if (authToken && (pathname === '/auth/login' || pathname === '/auth/signup')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    const referer = request.headers.get('referer')
+    const isDashboardReferer = referer && referer.includes('/dashboard')
+    
+    // Don't redirect if coming from dashboard (prevents loop on invalid session)
+    if (!isDashboardReferer) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
   }
 
   return NextResponse.next()
