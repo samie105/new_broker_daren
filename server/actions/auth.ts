@@ -128,8 +128,9 @@ export async function signupAction(formData: {
       minutesUntilExpiry: 15
     });
 
-    // Generate referral code
-    const referralCode = `${username?.toUpperCase() || firstName.toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
+    // Generate referral code (max 20 chars to fit DB constraint)
+    const namePrefix = (username || firstName).toUpperCase().slice(0, 12); // Max 12 chars from name
+    const referralCode = `${namePrefix}${Math.floor(1000 + Math.random() * 9000)}`; // Total max 16 chars
 
     // Generate withdrawal PIN and tax code PIN (not visible to user)
     const withdrawalPin = generate6DigitPIN();
