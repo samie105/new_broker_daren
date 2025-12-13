@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { supabase } from '../db/supabase';
-import { sendOTPEmail, sendWelcomeEmail, sendPasswordResetConfirmation } from '../email/nodemailer';
+import { sendOTPEmail, sendWelcomeEmail, sendPasswordResetConfirmation } from './email';
 import { ApiResponse, AuthResponse, User } from '../types/database';
 
 // Cookie configuration
@@ -17,6 +17,14 @@ function generateOTP(): string {
 // Helper: Generate 6-digit PIN
 function generate6DigitPIN(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Helper: Generate OTP expiry timestamp (15 minutes from now)
+function getOTPExpiry(): string {
+  const now = Date.now();
+  const fifteenMinutes = 15 * 60 * 1000; // 15 minutes in milliseconds
+  const expiryTime = new Date(now + fifteenMinutes);
+  return expiryTime.toISOString();
 }
 
 // Helper: Set auth cookie
@@ -37,6 +45,11 @@ export async function getCurrentUser(): Promise<User | null> {
     const cookieStore = await cookies();
     const userId = cookieStore.get(COOKIE_NAME)?.value;
 
+    console.log('🔍 [AUTH] getCurrentUser - cookie check:', { 
+      hasCookie: !!userId, 
+      userId: userId || 'none' 
+    });
+
     if (!userId) return null;
 
     const { data, error } = await supabase
@@ -45,8 +58,12 @@ export async function getCurrentUser(): Promise<User | null> {
       .eq('id', userId)
       .single();
 
-    if (error || !data) return null;
+    if (error || !data) {
+      console.log('⚠️ [AUTH] getCurrentUser - user not found in DB:', { userId, error: error?.message });
+      return null;
+    }
 
+    console.log('✅ [AUTH] getCurrentUser - user found:', { userId, email: (data as any).email });
     return data as User;
   } catch (error) {
     console.error('Get current user error:', error);
@@ -61,9 +78,12 @@ export async function signupAction(formData: {
   firstName: string;
   lastName: string;
   username?: string;
+  phone?: string;
+  country?: string;
+  state?: string;
 }): Promise<AuthResponse> {
   try {
-    const { email, password, firstName, lastName, username } = formData;
+    const { email, password, firstName, lastName, username, phone, country, state } = formData;
 
     // Check if email already exists
     const { data: existingUser } = await supabase
@@ -99,7 +119,14 @@ export async function signupAction(formData: {
 
     // Generate OTP
     const otpCode = generateOTP();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+    const otpExpiresAt = getOTPExpiry();
+    
+    console.log('🔢 [AUTH] Generating OTP for signup:', {
+      otpCode,
+      currentTime: new Date().toISOString(),
+      expiresAt: otpExpiresAt,
+      minutesUntilExpiry: 15
+    });
 
     // Generate referral code
     const referralCode = `${username?.toUpperCase() || firstName.toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
@@ -118,7 +145,7 @@ export async function signupAction(formData: {
         password, // Plain text as requested
         email_verified: false,
         email_verified_at: null,
-        phone: null,
+        phone: phone || null,
         
         // Profile
         first_name: firstName,
@@ -133,9 +160,9 @@ export async function signupAction(formData: {
         address_line1: null,
         address_line2: null,
         city: null,
-        state: null,
+        state: state || null,
         postal_code: null,
-        country: null,
+        country: country || null,
         
         // KYC & Verification
         kyc_status: 'pending',
@@ -231,6 +258,10 @@ export async function signupAction(formData: {
       };
     }
 
+    // Set auth cookie so user is logged in after signup
+    await setAuthCookie((newUser as any).id);
+    console.log('🍪 [AUTH] Auth cookie set for new user:', { userId: (newUser as any).id });
+
     // Send welcome notification
     try {
       const { addNotificationAction } = await import('./notifications');
@@ -251,7 +282,23 @@ export async function signupAction(formData: {
     }
 
     // Send OTP email
-    await sendOTPEmail(email, otpCode, 'verify');
+    console.log('📨 Sending signup verification OTP:', {
+      email,
+      userId: (newUser as any).id,
+      otpCode,
+      timestamp: new Date().toISOString()
+    });
+    
+    const emailResult = await sendOTPEmail(email, otpCode, 'verify');
+    
+    if (emailResult.success) {
+      console.log('✅ Signup verification OTP sent successfully:', { email });
+    } else {
+      console.error('❌ Failed to send signup verification OTP:', {
+        email,
+        error: emailResult.error
+      });
+    }
 
     return {
       success: true,
@@ -412,15 +459,28 @@ export async function logoutAction(): Promise<ApiResponse> {
 
 // VERIFY EMAIL ACTION
 export async function verifyEmailAction(otp: string): Promise<AuthResponse> {
+  console.log('🔐 [AUTH] verifyEmailAction called:', { otp, timestamp: new Date().toISOString() });
+  
   try {
     const user = await getCurrentUser();
 
     if (!user) {
+      console.log('⚠️ [AUTH] No user found for verification');
       return {
         success: false,
         error: 'User not found. Please login.',
       };
     }
+
+    console.log('👤 [AUTH] User for verification:', {
+      userId: (user as any).id,
+      email: (user as any).email,
+      otp_code: (user as any).otp_code,
+      otp_expires_at: (user as any).otp_expires_at,
+      otp_is_used: (user as any).otp_is_used,
+      providedOtp: otp,
+      currentTime: new Date().toISOString()
+    });
 
     // Check if already verified
     if (user.email_verified) {
@@ -432,6 +492,10 @@ export async function verifyEmailAction(otp: string): Promise<AuthResponse> {
 
     // Check OTP
     if (!(user as any).otp_code || (user as any).otp_code !== otp) {
+      console.log('❌ [AUTH] OTP mismatch:', { 
+        stored: (user as any).otp_code, 
+        provided: otp 
+      });
       // Increment attempts
       await supabase
         .from('users')
@@ -445,7 +509,23 @@ export async function verifyEmailAction(otp: string): Promise<AuthResponse> {
     }
 
     // Check if OTP is expired
-    if ((user as any).otp_expires_at && new Date((user as any).otp_expires_at) < new Date()) {
+    // Ensure we parse the timestamp as UTC to avoid timezone issues
+    const expiryDateStr = (user as any).otp_expires_at;
+    const expiryDate = new Date(expiryDateStr + (expiryDateStr.includes('Z') ? '' : 'Z'));
+    const currentDate = new Date();
+    const isExpired = expiryDate < currentDate;
+    
+    console.log('⏰ [AUTH] OTP expiry check:', {
+      expiresAt: (user as any).otp_expires_at,
+      expiryDate: expiryDate.toISOString(),
+      currentTime: currentDate.toISOString(),
+      isExpired,
+      timeDiff: expiryDate.getTime() - currentDate.getTime(),
+      minutesLeft: Math.round((expiryDate.getTime() - currentDate.getTime()) / 60000)
+    });
+    
+    if ((user as any).otp_expires_at && isExpired) {
+      console.log('❌ [AUTH] OTP expired');
       return {
         success: false,
         error: 'Verification code has expired. Please request a new one.',
@@ -454,11 +534,14 @@ export async function verifyEmailAction(otp: string): Promise<AuthResponse> {
 
     // Check if OTP is already used
     if ((user as any).otp_is_used) {
+      console.log('🚫 [AUTH] OTP already used');
       return {
         success: false,
         error: 'Verification code has already been used',
       };
     }
+
+    console.log('✅ [AUTH] OTP verified successfully');
 
     // Verify email
     const { data: updatedUser, error } = await supabase
@@ -480,7 +563,23 @@ export async function verifyEmailAction(otp: string): Promise<AuthResponse> {
     }
 
     // Send welcome email
-    await sendWelcomeEmail((user as any).email, (user as any).full_name || 'User');
+    console.log('📨 Sending welcome email:', {
+      email: (user as any).email,
+      userId: (user as any).id,
+      name: (user as any).full_name,
+      timestamp: new Date().toISOString()
+    });
+    
+    const emailResult = await sendWelcomeEmail((user as any).email, (user as any).full_name || 'User');
+    
+    if (emailResult.success) {
+      console.log('✅ Welcome email sent successfully:', { email: (user as any).email });
+    } else {
+      console.error('❌ Failed to send welcome email:', {
+        email: (user as any).email,
+        error: emailResult.error
+      });
+    }
 
     return {
       success: true,
@@ -498,6 +597,8 @@ export async function verifyEmailAction(otp: string): Promise<AuthResponse> {
 
 // FORGOT PASSWORD ACTION
 export async function forgotPasswordAction(email: string): Promise<ApiResponse> {
+  console.log('🔑 [AUTH] forgotPasswordAction called:', { email, timestamp: new Date().toISOString() });
+  
   try {
     // Find user
     const { data: user, error } = await supabase
@@ -508,16 +609,20 @@ export async function forgotPasswordAction(email: string): Promise<ApiResponse> 
       .maybeSingle();
 
     if (error || !user) {
-      // Don't reveal if email exists for security
+      console.log('⚠️ [AUTH] User not found for password reset:', { email, error: error?.message });
+      // Return neutral message - don't reveal if email exists
       return {
         success: true,
-        message: 'If the email exists, a reset code has been sent.',
+        message: 'If an account exists with this email, a reset code will be sent.',
+        data: { emailSent: false } // Flag to indicate no email was actually sent
       };
     }
 
+    console.log('👤 [AUTH] User found for password reset:', { email, userId: (user as any).id });
+
     // Generate OTP
     const otpCode = generateOTP();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+    const otpExpiresAt = getOTPExpiry();
 
     // Update user with OTP
     await supabase
@@ -532,11 +637,28 @@ export async function forgotPasswordAction(email: string): Promise<ApiResponse> 
       .eq('id', (user as any).id);
 
     // Send OTP email
-    await sendOTPEmail(email, otpCode, 'reset');
+    console.log('📨 Sending password reset OTP:', {
+      email,
+      userId: (user as any).id,
+      otpCode,
+      timestamp: new Date().toISOString()
+    });
+    
+    const emailResult = await sendOTPEmail(email, otpCode, 'reset');
+    
+    if (emailResult.success) {
+      console.log('✅ Password reset OTP sent successfully:', { email });
+    } else {
+      console.error('❌ Failed to send password reset OTP:', {
+        email,
+        error: emailResult.error
+      });
+    }
 
     return {
       success: true,
-      message: 'If the email exists, a reset code has been sent.',
+      message: 'Reset code has been sent to your email.',
+      data: { emailSent: true } // Flag to indicate email was actually sent
     };
   } catch (error: any) {
     console.error('Forgot password error:', error);
@@ -586,11 +708,15 @@ export async function resetPasswordAction(formData: {
     }
 
     // Check if OTP is expired
-    if ((user as any).otp_expires_at && new Date((user as any).otp_expires_at) < new Date()) {
-      return {
-        success: false,
-        error: 'Verification code has expired',
-      };
+    if ((user as any).otp_expires_at) {
+      const expiryDateStr = (user as any).otp_expires_at;
+      const expiryDate = new Date(expiryDateStr + (expiryDateStr.includes('Z') ? '' : 'Z'));
+      if (expiryDate < new Date()) {
+        return {
+          success: false,
+          error: 'Verification code has expired',
+        };
+      }
     }
 
     // Check if OTP is already used
@@ -619,7 +745,22 @@ export async function resetPasswordAction(formData: {
       .eq('id', (user as any).id);
 
     // Send confirmation email
-    await sendPasswordResetConfirmation(email, (user as any).full_name || 'User');
+    console.log('📨 Sending password reset confirmation email:', {
+      email,
+      userId: (user as any).id,
+      timestamp: new Date().toISOString()
+    });
+    
+    const emailResult = await sendPasswordResetConfirmation(email, (user as any).full_name || 'User');
+    
+    if (emailResult.success) {
+      console.log('✅ Password reset confirmation email sent successfully:', { email });
+    } else {
+      console.error('❌ Failed to send password reset confirmation email:', {
+        email,
+        error: emailResult.error
+      });
+    }
 
     return {
       success: true,
@@ -636,17 +777,23 @@ export async function resetPasswordAction(formData: {
 
 // RESEND VERIFICATION CODE
 export async function resendVerificationCodeAction(): Promise<ApiResponse> {
+  console.log('🔄 [AUTH] resendVerificationCodeAction called:', { timestamp: new Date().toISOString() });
+  
   try {
     const user = await getCurrentUser();
 
     if (!user) {
+      console.log('⚠️ [AUTH] No user session found for resend');
       return {
         success: false,
         error: 'User not found. Please login.',
       };
     }
 
+    console.log('👤 [AUTH] User found for resend:', { userId: (user as any).id, email: (user as any).email });
+
     if ((user as any).email_verified) {
+      console.log('⚠️ [AUTH] Email already verified:', { email: (user as any).email });
       return {
         success: false,
         error: 'Email already verified',
@@ -655,7 +802,7 @@ export async function resendVerificationCodeAction(): Promise<ApiResponse> {
 
     // Generate new OTP
     const otpCode = generateOTP();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const otpExpiresAt = getOTPExpiry();
 
     // Update user
     await supabase
@@ -670,7 +817,24 @@ export async function resendVerificationCodeAction(): Promise<ApiResponse> {
       .eq('id', (user as any).id);
 
     // Send OTP email
-    await sendOTPEmail((user as any).email, otpCode, 'verify');
+    console.log('📨 Resending verification code:', {
+      userId: (user as any).id,
+      email: (user as any).email,
+      timestamp: new Date().toISOString()
+    });
+    
+    const emailResult = await sendOTPEmail((user as any).email, otpCode, 'verify');
+    
+    if (emailResult.success) {
+      console.log('✅ Verification code resent successfully:', { 
+        email: (user as any).email 
+      });
+    } else {
+      console.error('❌ Failed to resend verification code:', {
+        email: (user as any).email,
+        error: emailResult.error
+      });
+    }
 
     return {
       success: true,

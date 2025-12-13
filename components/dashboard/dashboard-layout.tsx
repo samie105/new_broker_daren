@@ -463,68 +463,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     />
                   </div>
                   
-                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2 pt-2">
-                    Account
-                  </div>
-                  
-                  <div className="space-y-2 px-2">
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start h-12 px-3 rounded-xl"
-                      onClick={() => {
-                        setSheetOpen(false)
-                        router.push('/dashboard/settings')
-                      }}
-                    >
-                      <div className="flex items-center space-x-3 w-full">
-                        <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 flex-shrink-0">
-                          <User className="h-4 w-4 text-primary dark:text-primary" />
-                        </div>
-                        <div className="text-left flex-1">
-                          <div className="text-sm font-medium">Profile</div>
-                          <div className="text-xs text-muted-foreground">Manage your account</div>
-                        </div>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start h-12 px-3 rounded-xl text-red-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                    onClick={async () => {
+                      setSheetOpen(false)
+                      await handleLogout()
+                    }}
+                  >
+                    <div className="flex items-center space-x-3 w-full">
+                      <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20 flex-shrink-0">
+                        <LogOut className="h-4 w-4 text-red-600 dark:text-red-400" />
                       </div>
-                    </Button>
-                    
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start h-12 px-3 rounded-xl"
-                      onClick={() => {
-                        setSheetOpen(false)
-                        router.push('/dashboard/settings')
-                      }}
-                    >
-                      <div className="flex items-center space-x-3 w-full">
-                        <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-900/20 flex-shrink-0">
-                          <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        </div>
-                        <div className="text-left flex-1">
-                          <div className="text-sm font-medium">Settings</div>
-                          <div className="text-xs text-muted-foreground">App preferences</div>
-                        </div>
+                      <div className="text-left flex-1">
+                        <div className="text-sm font-medium">Log out</div>
+                        <div className="text-xs text-muted-foreground">Sign out of account</div>
                       </div>
-                    </Button>
-                    
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start h-12 px-3 rounded-xl text-red-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-                      onClick={async () => {
-                        setSheetOpen(false)
-                        await handleLogout()
-                      }}
-                    >
-                      <div className="flex items-center space-x-3 w-full">
-                        <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20 flex-shrink-0">
-                          <LogOut className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div className="text-left flex-1">
-                          <div className="text-sm font-medium">Log out</div>
-                          <div className="text-xs text-muted-foreground">Sign out of account</div>
-                        </div>
-                      </div>
-                    </Button>
-                  </div>
+                    </div>
+                  </Button>
                 </div>
               </div>
             </SheetContent>

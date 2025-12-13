@@ -4,7 +4,7 @@ import { supabase } from '../db/supabase'
 import { cookies } from 'next/headers'
 import { ApiResponse } from '../types/database'
 import { notifyTransaction } from './notification-helpers'
-import { sendWithdrawalNotification } from '../email/nodemailer'
+import { sendWithdrawalNotification } from './email'
 
 interface WithdrawalData {
   symbol: string

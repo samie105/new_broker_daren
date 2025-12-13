@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Lock, AlertCircle, Eye, EyeOff, CheckCircle, X } from 'lucide-react'
+import { resetPasswordAction } from '@/server/actions/auth'
+import { toast } from 'sonner'
 
 function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
-  const verified = searchParams.get('verified')
+  const otp = searchParams.get('otp')
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -63,13 +65,30 @@ function ResetPasswordContent() {
     setLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setSuccess(true)
-      setTimeout(() => {
-        router.push('/auth/login')
-      }, 2000)
+      const result = await resetPasswordAction({
+        email: email || '',
+        otp: otp || '',
+        newPassword: password
+      })
+
+      if (result.success) {
+        toast.success('Password reset successful!', {
+          description: 'Confirmation email sent. Redirecting to login...',
+        })
+        setSuccess(true)
+        setTimeout(() => {
+          router.push('/auth/login')
+        }, 2000)
+      } else {
+        toast.error('Reset failed', {
+          description: result.error || 'Please try again.',
+        })
+        setError(result.error || 'Failed to reset password')
+      }
     } catch (err) {
+      toast.error('Something went wrong', {
+        description: 'An unexpected error occurred.',
+      })
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
@@ -99,7 +118,7 @@ function ResetPasswordContent() {
     )
   }
 
-  if (!email || !verified) {
+  if (!email || !otp) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
         <div className="w-full max-w-md">

@@ -183,13 +183,17 @@ export function WithdrawForm() {
         })
 
         if (withdrawalResult.success) {
-          toast.success('Withdrawal processed successfully!')
+          toast.success('Withdrawal processed successfully!', {
+            description: 'Confirmation email sent to your email address.',
+          })
           // Continue to completion
           setTimeout(() => {
             setProgress(95)
           }, 500)
         } else {
-          toast.error(withdrawalResult.error || 'Failed to process withdrawal')
+          toast.error(withdrawalResult.error || 'Failed to process withdrawal', {
+            description: 'Please try again or contact support.',
+          })
           setCurrentStep('form')
           setIsProcessing(false)
         }

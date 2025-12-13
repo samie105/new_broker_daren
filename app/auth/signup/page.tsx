@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { ArrowLeft, ArrowRight, Mail, Lock, User, Phone, Globe, Check, AlertCircle, X, CheckCircle, Eye, EyeOff, Facebook, Github, Info } from 'lucide-react'
-import { signupAction } from '@/lib/auth-actions'
+import { signupAction } from '@/server/actions/auth'
 import { Country, State } from 'country-state-city'
+import { toast } from 'sonner'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -177,18 +178,28 @@ export default function SignupPage() {
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
+        username: `${formData.firstName.toLowerCase()}${formData.lastName.toLowerCase()}${Math.floor(Math.random() * 1000)}`,
         phone: formData.phone,
         country: formData.country,
         state: formData.state
       })
 
       if (result.success) {
-        // Instead of redirecting to dashboard, redirect to OTP verification
+        toast.success('Account created!', {
+          description: 'Verification code sent to your email.',
+        })
+        // Redirect to OTP verification
         router.push(`/auth/verify-otp?email=${encodeURIComponent(formData.email)}&type=verify`)
       } else {
+        toast.error('Signup failed', {
+          description: result.error || 'Please try again.',
+        })
         setError(result.error || 'Signup failed')
       }
     } catch (err) {
+      toast.error('Something went wrong', {
+        description: 'An unexpected error occurred. Please try again.',
+      })
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)

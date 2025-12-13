@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Mail, AlertCircle, CheckCircle } from 'lucide-react'
+import { forgotPasswordAction } from '@/server/actions/auth'
+import { toast } from 'sonner'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -20,10 +22,29 @@ export default function ForgotPasswordPage() {
     setError('')
 
     try {
-      // Simulate API call to send OTP
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setOtpSent(true)
+      const result = await forgotPasswordAction(email)
+      
+      if (result.success && result.data?.emailSent) {
+        toast.success('Reset code sent!', {
+          description: 'Check your email for the verification code.',
+        })
+        setOtpSent(true)
+      } else if (result.success && !result.data?.emailSent) {
+        toast.info('Check your email', {
+          description: 'If an account exists with this email, a code will be sent.',
+        })
+        // Still proceed to OTP page - user might have entered wrong email
+        setOtpSent(true)
+      } else {
+        toast.error('Failed to send reset code', {
+          description: result.error || 'Please try again.',
+        })
+        setError(result.error || 'Failed to send reset code')
+      }
     } catch (err) {
+      toast.error('Something went wrong', {
+        description: 'An unexpected error occurred. Please try again.',
+      })
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
@@ -32,10 +53,28 @@ export default function ForgotPasswordPage() {
 
   const handleResend = async () => {
     setLoading(true)
+    setError('')
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      // Show success message
+      const result = await forgotPasswordAction(email)
+      
+      if (result.success && result.data?.emailSent) {
+        toast.success('Code resent!', {
+          description: 'A new verification code has been sent to your email.',
+        })
+      } else if (result.success && !result.data?.emailSent) {
+        toast.info('Check your email', {
+          description: 'If an account exists with this email, a code will be sent.',
+        })
+      } else {
+        toast.error('Failed to resend code', {
+          description: result.error || 'Please try again.',
+        })
+      }
     } catch (err) {
+      toast.error('Failed to resend code', {
+        description: 'An unexpected error occurred.',
+      })
       setError('Failed to resend code')
     } finally {
       setLoading(false)

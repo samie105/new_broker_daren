@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, AlertCircle, Mail, CheckCircle } from 'lucide-react'
+import { verifyEmailAction, resendVerificationCodeAction, forgotPasswordAction } from '@/server/actions/auth'
+import { toast } from 'sonner'
 
 function VerifyOtpContent() {
   const router = useRouter()
@@ -69,18 +71,30 @@ function VerifyOtpContent() {
     setLoading(true)
 
     try {
-      // Simulate API call to verify OTP
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // For demo, accept any 6-digit code
       if (type === 'reset') {
-        // Redirect to reset password page with verified token
-        router.push(`/auth/reset-password?email=${encodeURIComponent(email || '')}&verified=true`)
+        // For reset, redirect to reset password page with OTP
+        toast.success('Code verified!')
+        router.push(`/auth/reset-password?email=${encodeURIComponent(email || '')}&otp=${otpCode}`)
       } else {
-        // Email verification success
-        router.push('/auth/login?verified=true')
+        // Email verification
+        const result = await verifyEmailAction(otpCode)
+        
+        if (result.success) {
+          toast.success('Email verified!', {
+            description: 'Your account is now active.',
+          })
+          router.push('/auth/login?verified=true')
+        } else {
+          toast.error('Verification failed', {
+            description: result.error || 'Invalid or expired code.',
+          })
+          setError(result.error || 'Invalid or expired code. Please try again.')
+        }
       }
     } catch (err) {
+      toast.error('Something went wrong', {
+        description: 'An unexpected error occurred.',
+      })
       setError('Invalid or expired code. Please try again.')
     } finally {
       setLoading(false)
@@ -91,12 +105,57 @@ function VerifyOtpContent() {
     setResending(true)
     setError('')
 
+    console.log('🔄 [FRONTEND] handleResend called:', { type, email });
+
     try {
-      // Simulate API call to resend OTP
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setOtp(['', '', '', '', '', ''])
-      inputRefs.current[0]?.focus()
+      let result
+      
+      if (type === 'reset') {
+        console.log('🔄 [FRONTEND] Calling forgotPasswordAction...');
+        // For password reset, use forgotPasswordAction
+        result = await forgotPasswordAction(email || '')
+        console.log('🔄 [FRONTEND] forgotPasswordAction result:', result);
+        
+        // Check if email was actually sent
+        if (result.success && result.data?.emailSent) {
+          toast.success('Code resent!', {
+            description: 'A new verification code has been sent to your email.',
+          })
+          setOtp(['', '', '', '', '', ''])
+          inputRefs.current[0]?.focus()
+        } else if (result.success && !result.data?.emailSent) {
+          toast.info('Check your email', {
+            description: 'If an account exists with this email, a code will be sent.',
+          })
+        } else {
+          toast.error('Failed to resend code', {
+            description: result.error || 'Please try again.',
+          })
+          setError(result.error || 'Failed to resend code')
+        }
+      } else {
+        console.log('🔄 [FRONTEND] Calling resendVerificationCodeAction...');
+        // For email verification, use resendVerificationCodeAction
+        result = await resendVerificationCodeAction()
+        console.log('🔄 [FRONTEND] resendVerificationCodeAction result:', result);
+        
+        if (result.success) {
+          toast.success('Code resent!', {
+            description: 'A new verification code has been sent to your email.',
+          })
+          setOtp(['', '', '', '', '', ''])
+          inputRefs.current[0]?.focus()
+        } else {
+          toast.error('Failed to resend code', {
+            description: result.error || 'Please try again.',
+          })
+          setError(result.error || 'Failed to resend code')
+        }
+      }
     } catch (err) {
+      toast.error('Failed to resend code', {
+        description: 'An unexpected error occurred.',
+      })
       setError('Failed to resend code')
     } finally {
       setResending(false)
@@ -181,7 +240,7 @@ function VerifyOtpContent() {
                 </div>
 
                 <p className="text-xs text-center text-muted-foreground">
-                  Code expires in 10 minutes
+                  Code expires in 15 minutes
                 </p>
               </div>
 
