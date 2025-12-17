@@ -263,47 +263,53 @@ export async function signupAction(formData: {
     await setAuthCookie((newUser as any).id);
     console.log('🍪 [AUTH] Auth cookie set for new user:', { userId: (newUser as any).id });
 
-    // Send welcome notification
-    try {
-      const { addNotificationAction } = await import('./notifications');
-      await addNotificationAction((newUser as any).id, {
-        type: 'announcement',
-        title: '🎉 Welcome to Atlantic Pacific Capitals!',
-        message: `Hi ${firstName}! Welcome to Atlantic Pacific Capitals. We're excited to have you on board. Start by verifying your email and exploring our features.`,
-        icon: '👋',
-        action_url: '/dashboard',
-        metadata: {
-          welcome_bonus: 'available',
-          signup_date: new Date().toISOString(),
-        },
-      });
-    } catch (notifError) {
-      console.error('Failed to send welcome notification:', notifError);
-      // Don't fail signup if notification fails
-    }
+    // Best-effort side effects: do NOT block signup/redirect on these.
+    // Users can always use "Resend code" on the verification screen.
+    void (async () => {
+      try {
+        const { addNotificationAction } = await import('./notifications');
+        await addNotificationAction((newUser as any).id, {
+          type: 'announcement',
+          title: '🎉 Welcome to Atlantic Pacific Capitals!',
+          message: `Hi ${firstName}! Welcome to Atlantic Pacific Capitals. We're excited to have you on board. Start by verifying your email and exploring our features.`,
+          icon: '👋',
+          action_url: '/dashboard',
+          metadata: {
+            welcome_bonus: 'available',
+            signup_date: new Date().toISOString(),
+          },
+        });
+      } catch (notifError) {
+        console.error('Failed to send welcome notification:', notifError);
+      }
+    })();
 
-    // Send OTP email
-    console.log('📨 Sending signup verification OTP:', {
-      email,
-      userId: (newUser as any).id,
-      otpCode,
-      timestamp: new Date().toISOString()
-    });
-    
-    const emailResult = await sendOTPEmail(email, otpCode, 'verify');
-    
-    if (emailResult.success) {
-      console.log('✅ Signup verification OTP sent successfully:', { email });
-    } else {
-      console.error('❌ Failed to send signup verification OTP:', {
-        email,
-        error: emailResult.error
-      });
-    }
+    void (async () => {
+      try {
+        console.log('📨 Sending signup verification OTP (best-effort):', {
+          email,
+          userId: (newUser as any).id,
+          timestamp: new Date().toISOString(),
+        });
+
+        const emailResult = await sendOTPEmail(email, otpCode, 'verify');
+
+        if (emailResult.success) {
+          console.log('✅ Signup verification OTP sent successfully:', { email });
+        } else {
+          console.error('❌ Failed to send signup verification OTP:', {
+            email,
+            error: emailResult.error,
+          });
+        }
+      } catch (emailError) {
+        console.error('❌ Unexpected error while sending signup OTP:', emailError);
+      }
+    })();
 
     return {
       success: true,
-      message: 'Account created! Please check your email for verification code.',
+      message: 'Account created! If you don\'t receive a code, use Resend on the verification screen.',
       data: newUser,
     };
   } catch (error: any) {

@@ -186,7 +186,7 @@ export default function SignupPage() {
 
       if (result.success) {
         toast.success('Account created!', {
-          description: 'Verification code sent to your email.',
+          description: 'Verification code will be sent to your email. If it doesn\'t arrive, tap Resend on the next screen.',
         })
         // Redirect to OTP verification
         router.push(`/auth/verify-otp?email=${encodeURIComponent(formData.email)}&type=verify`)
