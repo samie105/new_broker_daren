@@ -30,40 +30,17 @@ function getOTPExpiry(): string {
 // Helper: Set auth cookie
 async function setAuthCookie(userId: string) {
   const cookieStore = await cookies();
-  const isProduction = process.env.NODE_ENV === 'production';
   
-  // Get the app URL to extract domain for production
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  let domain: string | undefined = undefined;
-  
-  // In production, set domain for cookie to work across subdomains
-  if (isProduction && appUrl) {
-    try {
-      const url = new URL(appUrl);
-      domain = url.hostname;
-      console.log('🍪 Setting cookie domain:', domain);
-    } catch (e) {
-      console.warn('⚠️ Could not parse NEXT_PUBLIC_APP_URL for cookie domain');
-    }
-  }
-  
+  // Simple, reliable cookie configuration
   cookieStore.set(COOKIE_NAME, userId, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax', // Use 'strict' in production for better security
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', // 'lax' works better across different scenarios
     maxAge: COOKIE_MAX_AGE,
     path: '/',
-    ...(domain && { domain }), // Only set domain if in production and valid
   });
   
-  console.log('🍪 Cookie set with config:', {
-    name: COOKIE_NAME,
-    userId,
-    secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
-    domain: domain || 'not set',
-    maxAge: COOKIE_MAX_AGE,
-  });
+  console.log('🍪 [AUTH] Cookie set:', { userId, cookieName: COOKIE_NAME });
 }
 
 // Helper: Get current user from cookie

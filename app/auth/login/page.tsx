@@ -62,17 +62,11 @@ function LoginContent() {
       }
 
       if (result.success) {
-        console.log('✅ FRONTEND: Login successful, showing toast...')
+        console.log('✅ FRONTEND: Login successful')
+        toast.success('Welcome back!')
         
-        // Show success toast
-        toast.success('Welcome back!', {
-          description: result.message || 'You have successfully logged in.',
-        })
-        
-        // Immediately redirect to the destination - no delay needed
-        console.log('🔄 FRONTEND: Redirecting to:', from)
-        router.push(from)
-        router.refresh() // Force refresh to update server components
+        // Simple redirect - let Next.js handle the rest
+        window.location.href = from
       } else {
         console.log('❌ FRONTEND: Login failed:', result.error)
         
