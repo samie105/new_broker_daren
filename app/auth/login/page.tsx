@@ -26,6 +26,11 @@ function LoginContent() {
   const [showVerifiedMessage, setShowVerifiedMessage] = useState(false)
   const [showOAuthDialog, setShowOAuthDialog] = useState(false)
 
+  // Prefetch the destination route for faster navigation
+  useEffect(() => {
+    router.prefetch(from)
+  }, [router, from])
+
   useEffect(() => {
     if (verified === 'true') {
       setShowVerifiedMessage(true)
@@ -64,15 +69,10 @@ function LoginContent() {
           description: result.message || 'You have successfully logged in.',
         })
         
-        // Reset loading state before redirect
-        setLoading(false)
-        
-        // Redirect to the original route or dashboard
-        setTimeout(() => {
-          console.log('🔄 FRONTEND: Redirecting to:', from)
-          router.push(from)
-          router.refresh() // Force refresh to update server components
-        }, 500)
+        // Immediately redirect to the destination - no delay needed
+        console.log('🔄 FRONTEND: Redirecting to:', from)
+        router.push(from)
+        router.refresh() // Force refresh to update server components
       } else {
         console.log('❌ FRONTEND: Login failed:', result.error)
         

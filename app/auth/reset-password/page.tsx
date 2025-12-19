@@ -25,6 +25,11 @@ function ResetPasswordContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
+  // Prefetch login page for faster navigation after reset
+  React.useEffect(() => {
+    router.prefetch('/auth/login')
+  }, [router])
+
   // Password strength tracking
   const [passwordStrength, setPasswordStrength] = useState({
     hasLowercase: false,
@@ -76,9 +81,8 @@ function ResetPasswordContent() {
           description: 'Confirmation email sent. Redirecting to login...',
         })
         setSuccess(true)
-        setTimeout(() => {
-          router.push('/auth/login')
-        }, 2000)
+        // Immediately redirect to login - no delay needed
+        router.push('/auth/login')
       } else {
         toast.error('Reset failed', {
           description: result.error || 'Please try again.',

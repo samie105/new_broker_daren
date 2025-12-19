@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,10 +12,16 @@ import { forgotPasswordAction } from '@/server/actions/auth'
 import { toast } from 'sonner'
 
 export default function ForgotPasswordPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [otpSent, setOtpSent] = useState(false)
+
+  // Prefetch the verify-otp page for faster navigation
+  useEffect(() => {
+    router.prefetch('/auth/verify-otp')
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,11 +117,12 @@ export default function ForgotPasswordPage() {
                 </p>
               </div>
               
-              <Link href={`/auth/verify-otp?email=${encodeURIComponent(email)}&type=reset`}>
-                <Button className="w-full">
-                  Enter OTP Code
-                </Button>
-              </Link>
+              <Button 
+                className="w-full"
+                onClick={() => router.push(`/auth/verify-otp?email=${encodeURIComponent(email)}&type=reset`)}
+              >
+                Enter OTP Code
+              </Button>
 
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">

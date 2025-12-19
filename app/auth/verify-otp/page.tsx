@@ -21,6 +21,15 @@ function VerifyOtpContent() {
   const [resending, setResending] = useState(false)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
+  // Prefetch destination routes for faster navigation
+  useEffect(() => {
+    if (type === 'reset') {
+      router.prefetch('/auth/reset-password')
+    } else {
+      router.prefetch('/dashboard')
+    }
+  }, [router, type])
+
   useEffect(() => {
     // Focus first input on mount
     inputRefs.current[0]?.focus()

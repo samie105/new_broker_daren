@@ -23,6 +23,11 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [showOAuthDialog, setShowOAuthDialog] = useState(false)
 
+  // Prefetch verify-otp page for faster navigation after signup
+  React.useEffect(() => {
+    router.prefetch('/auth/verify-otp')
+  }, [router])
+
   // Form data
   const [formData, setFormData] = useState({
     firstName: '',
