@@ -103,4 +103,6 @@ async function setAuthCookie(userId: string) {
     maxAge: COOKIE_MAX_AGE,
     path: '/',
   })
+
+  console.log('🍪 [ADMIN AUTH] Cookie set:', { userId, cookieName: COOKIE_NAME, secure: process.env.NODE_ENV === 'production' })
 }

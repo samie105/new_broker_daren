@@ -2,12 +2,30 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const userSession = request.cookies.get('user_session')
-  const adminSession = request.cookies.get('admin_session')
   const { pathname } = request.nextUrl
 
-  console.log('[MIDDLEWARE]', { pathname, hasUserSession: !!userSession, hasAdminSession: !!adminSession })
+  // Debug: Get all cookies and log everything
+  const allCookies = request.cookies.getAll()
+  const userSession = request.cookies.get('user_session')
+  const adminSession = request.cookies.get('admin_session')
+  
+  console.log('[MIDDLEWARE DEBUG]', {
+    pathname,
+    allCookieNames: allCookies.map(c => ({ name: c.name, hasValue: !!c.value })),
+    userSession: { name: userSession?.name, value: userSession?.value },
+    adminSession: { name: adminSession?.name, value: adminSession?.value },
+    requestHeaders: {
+      cookie: request.headers.get('cookie'),
+    },
+  })
+if (pathname.startsWith('/dashboard')) {
+    if (!userSession) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+    return NextResponse.next()
+  }
 
+  return NextResponse.next()
   // Admin login page
   if (pathname === '/admin-login') {
     if (adminSession) {
