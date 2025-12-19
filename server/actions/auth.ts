@@ -40,7 +40,7 @@ async function setAuthCookie(userId: string) {
     path: '/',
   });
   
-  console.log('🍪 [AUTH] Cookie set:', { userId, cookieName: COOKIE_NAME });
+  console.log('🍪 [AUTH] Cookie set:', { userId, cookieName: COOKIE_NAME, secure: process.env.NODE_ENV === 'production' });
 }
 
 // Helper: Get current user from cookie
@@ -51,7 +51,9 @@ export async function getCurrentUser(): Promise<User | null> {
 
     console.log('🔍 [AUTH] getCurrentUser - cookie check:', { 
       hasCookie: !!userId, 
-      userId: userId || 'none' 
+      userId: userId || 'none',
+      cookieName: COOKIE_NAME,
+      allCookies: cookieStore.getAll().map(c => ({ name: c.name, hasValue: !!c.value })),
     });
 
     if (!userId) return null;
