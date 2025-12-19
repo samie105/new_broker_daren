@@ -9,7 +9,7 @@ import { cookies } from 'next/headers';
 export async function getSubscriptionPlansAction(): Promise<ApiResponse<any[]>> {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get('auth_session')?.value;
+    const userId = cookieStore.get('user_session')?.value;
 
     if (!userId) {
       return {
@@ -79,7 +79,7 @@ export async function getSubscriptionPlansAction(): Promise<ApiResponse<any[]>> 
 export async function getSubscriptionPlanAction(planId: string): Promise<ApiResponse<any>> {
   try {
     const cookieStore = await cookies();
-    const userId = cookieStore.get('auth_session')?.value;
+    const userId = cookieStore.get('user_session')?.value;
 
     if (!userId) {
       return {

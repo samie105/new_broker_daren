@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,7 +15,7 @@ import { toast } from 'sonner'
 function LoginContent() {
   const searchParams = useSearchParams()
   const verified = searchParams.get('verified')
-  
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -49,7 +49,7 @@ function LoginContent() {
       if (result.success) {
         toast.success('Welcome back!')
         // Hard redirect to ensure cookie is sent with request - fixes production auth issues
-        window.location.href = '/dashboard'
+        router.push('/dashboard')
       } else {
         toast.error('Login failed', {
           description: result.error || 'Invalid email or password',

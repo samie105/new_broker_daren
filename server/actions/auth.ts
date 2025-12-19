@@ -6,7 +6,7 @@ import { sendOTPEmail, sendWelcomeEmail, sendPasswordResetConfirmation } from '.
 import { ApiResponse, AuthResponse, User } from '../types/database';
 
 // Cookie configuration
-const COOKIE_NAME = 'auth_session';
+const COOKIE_NAME = 'user_session';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 // Helper: Generate random OTP

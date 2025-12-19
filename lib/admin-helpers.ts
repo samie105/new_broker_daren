@@ -15,7 +15,7 @@ export interface AdminUser {
 async function getAdminIdFromCookie(): Promise<string | null> {
   try {
     const cookieStore = await cookies()
-    const adminId = cookieStore.get('auth_session')?.value
+    const adminId = cookieStore.get('admin_session')?.value
     return adminId || null
   } catch (error) {
     console.error('getAdminIdFromCookie error:', error)

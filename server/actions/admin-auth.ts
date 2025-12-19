@@ -93,7 +93,7 @@ async function setAuthCookie(userId: string) {
   const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
   
-  const COOKIE_NAME = 'auth_session'
+  const COOKIE_NAME = 'admin_session'
   const COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
   
   cookieStore.set(COOKIE_NAME, userId, {

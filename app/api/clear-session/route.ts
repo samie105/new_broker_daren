@@ -9,8 +9,9 @@ export async function GET() {
   try {
     const cookieStore = await cookies()
     
-    // Clear the auth_session cookie
-    cookieStore.delete('auth_session')
+    // Clear both user and admin session cookies
+    cookieStore.delete('user_session')
+    cookieStore.delete('admin_session')
     
     // Also clear the old auth-token cookie if it exists
     cookieStore.delete('auth-token')

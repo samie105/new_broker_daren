@@ -103,7 +103,7 @@ export interface Withdrawal {
 export async function getPortfolioHoldingsAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -151,7 +151,7 @@ export async function getPortfolioHoldingsAction() {
 export async function getTransactionsAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -199,7 +199,7 @@ export async function getTransactionsAction() {
 export async function getTradesAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -247,7 +247,7 @@ export async function getTradesAction() {
 export async function getStakingPositionsAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -295,7 +295,7 @@ export async function getStakingPositionsAction() {
 export async function getPortfolioHistoryAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -343,7 +343,7 @@ export async function getPortfolioHistoryAction() {
 export async function getDashboardMetricsAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -409,7 +409,7 @@ export async function getDashboardMetricsAction() {
 export async function getDepositsAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -456,7 +456,7 @@ export async function getDepositsAction() {
 export async function getWithdrawalsAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -503,7 +503,7 @@ export async function getWithdrawalsAction() {
 export async function getWalletAddressesAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -551,7 +551,7 @@ export async function getWalletAddressesAction() {
 export async function getCombinedHistoryAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -744,7 +744,7 @@ export interface OrderHistory {
 export async function getActiveOrdersAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -791,7 +791,7 @@ export async function getActiveOrdersAction() {
 export async function getOrderHistoryAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -861,7 +861,7 @@ export interface Investment {
 export async function getActiveInvestmentsAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -956,7 +956,7 @@ export interface CopyTradingPosition {
 export async function getCopyTradingPositionsAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -1013,7 +1013,7 @@ export interface VerificationStatus {
 export async function getVerificationStatusAction() {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -1097,7 +1097,7 @@ export interface InvestmentPlan {
 export async function getAdminStakingPlansAction() {
   try {
     const cookieStore = await cookies()
-    const userId = cookieStore.get('auth_session')?.value
+    const userId = cookieStore.get('user_session')?.value
 
     if (!userId) {
       return {
@@ -1166,7 +1166,7 @@ export async function getAdminStakingPlansAction() {
 export async function getAdminInvestmentPlansAction() {
   try {
     const cookieStore = await cookies()
-    const userId = cookieStore.get('auth_session')?.value
+    const userId = cookieStore.get('user_session')?.value
 
     if (!userId) {
       return {
@@ -1261,7 +1261,7 @@ export interface SubscriptionPlan {
 export async function getAdminSubscriptionPlansAction() {
   try {
     const cookieStore = await cookies()
-    const userId = cookieStore.get('auth_session')?.value
+    const userId = cookieStore.get('user_session')?.value
 
     if (!userId) {
       return {

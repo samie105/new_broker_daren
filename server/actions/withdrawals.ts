@@ -20,7 +20,7 @@ interface WithdrawalData {
 export async function validateTaxCodePinAction(taxCodePin: string): Promise<ApiResponse<boolean>> {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -74,7 +74,7 @@ export async function validateTaxCodePinAction(taxCodePin: string): Promise<ApiR
 export async function validateWithdrawalPinAction(withdrawalPin: string): Promise<ApiResponse<boolean>> {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
@@ -130,7 +130,7 @@ export async function processWithdrawalAction(
 ): Promise<ApiResponse> {
   try {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('auth_session')
+    const sessionCookie = cookieStore.get('user_session')
 
     if (!sessionCookie) {
       return {
