@@ -65,8 +65,11 @@ function LoginContent() {
         console.log('✅ FRONTEND: Login successful')
         toast.success('Welcome back!')
         
-        // Simple redirect - let Next.js handle the rest
-        window.location.href = from
+        // Small delay to ensure cookie is set before navigation (production timing issue)
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // Always redirect to dashboard after successful login
+        router.push('/dashboard')
       } else {
         console.log('❌ FRONTEND: Login failed:', result.error)
         
