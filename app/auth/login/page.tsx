@@ -2,21 +2,19 @@
 
 import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { ArrowLeft, Mail, Lock, AlertCircle, Eye, EyeOff, CheckCircle, Facebook, Github, Info } from 'lucide-react'
-import { loginAction } from '@/server/actions/auth' // ✅ CHANGED: Using real Supabase action
-import { toast } from 'sonner' // ✅ ADDED: Toast notifications
+import { ArrowLeft, Mail, Lock, AlertCircle, Eye, EyeOff, CheckCircle, Info } from 'lucide-react'
+import { loginAction } from '@/server/actions/auth'
+import { toast } from 'sonner'
 
 function LoginContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const verified = searchParams.get('verified')
-  const from = searchParams.get('from') || '/dashboard' // Get redirect URL or default to dashboard
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,15 +24,9 @@ function LoginContent() {
   const [showVerifiedMessage, setShowVerifiedMessage] = useState(false)
   const [showOAuthDialog, setShowOAuthDialog] = useState(false)
 
-  // Prefetch the destination route for faster navigation
-  useEffect(() => {
-    router.prefetch(from)
-  }, [router, from])
-
   useEffect(() => {
     if (verified === 'true') {
       setShowVerifiedMessage(true)
-      // Hide message after 5 seconds
       setTimeout(() => setShowVerifiedMessage(false), 5000)
     }
   }, [verified])
@@ -44,17 +36,10 @@ function LoginContent() {
     setLoading(true)
     setError('')
 
-    console.log('🚀 FRONTEND: Submitting login...', { email, redirectTo: from }) // Debug log
-
     try {
-      // Call the login action
       const result = await loginAction({ email, password })
       
-      console.log('📥 FRONTEND: Login result:', result) // Debug log
-      
-      // Check if result exists and has success property
       if (!result) {
-        console.error('❌ FRONTEND: No result returned from loginAction')
         toast.error('No response from server. Please try again.')
         setError('No response from server')
         setLoading(false)
@@ -62,33 +47,21 @@ function LoginContent() {
       }
 
       if (result.success) {
-        console.log('✅ FRONTEND: Login successful')
         toast.success('Welcome back!')
-        
-        // Small delay to ensure cookie is set before navigation (production timing issue)
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        // Always redirect to dashboard after successful login
-        router.push('/dashboard')
+        // Hard redirect to ensure cookie is sent with request - fixes production auth issues
+        window.location.href = '/dashboard'
       } else {
-        console.log('❌ FRONTEND: Login failed:', result.error)
-        
-        // Show error toast
         toast.error('Login failed', {
           description: result.error || 'Invalid email or password',
         })
-        
         setError(result.error || 'Login failed')
         setLoading(false)
       }
     } catch (err) {
-      console.error('💥 FRONTEND: Login error:', err)
-      
-      // Show error toast
+      console.error('Login error:', err)
       toast.error('An error occurred', {
         description: 'Please try again later.',
       })
-      
       setError('An unexpected error occurred')
       setLoading(false)
     }
@@ -191,7 +164,9 @@ function LoginContent() {
                   variant="outline"
                   onClick={() => setShowOAuthDialog(true)}
                 >
-                  <Facebook className="w-5 h-5 mr-2" />
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
                   Facebook
                 </Button>
                 <Button 

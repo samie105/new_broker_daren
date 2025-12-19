@@ -1,7 +1,6 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   signupAction,
@@ -17,9 +16,6 @@ import type { User } from '@/server/types/database';
 
 // Hook: Get Current User
 export function useAuth() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
   const { data: user, isLoading, error } = useQuery<User | null>({
     queryKey: ['currentUser'],
     queryFn: getCurrentUser,
@@ -36,7 +32,6 @@ export function useAuth() {
 
 // Hook: Signup
 export function useSignup() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -47,7 +42,8 @@ export function useSignup() {
           description: 'Please check your email to verify your account.',
         });
         queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-        router.push('/auth/verify-otp');
+        // Hard redirect to OTP verification page
+        window.location.href = '/auth/verify-otp';
       } else {
         toast.error('Signup failed', {
           description: data.message || 'Please try again.',
@@ -64,7 +60,6 @@ export function useSignup() {
 
 // Hook: Login
 export function useLogin() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -75,7 +70,8 @@ export function useLogin() {
           description: 'You have successfully logged in.',
         });
         queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-        router.push('/dashboard');
+        // Hard redirect to ensure cookie is sent with request - fixes production auth issues
+        window.location.href = '/dashboard';
       } else {
         toast.error('Login failed', {
           description: data.message || 'Invalid credentials.',
@@ -92,7 +88,6 @@ export function useLogin() {
 
 // Hook: Logout
 export function useLogout() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -102,7 +97,8 @@ export function useLogout() {
         description: 'See you next time!',
       });
       queryClient.clear();
-      router.push('/auth/login');
+      // Hard redirect to ensure clean session state
+      window.location.href = '/auth/login';
     },
     onError: (error: Error) => {
       toast.error('Logout failed', {
@@ -114,7 +110,6 @@ export function useLogout() {
 
 // Hook: Verify Email
 export function useVerifyEmail() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -125,7 +120,8 @@ export function useVerifyEmail() {
           description: 'Your account is now active.',
         });
         queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-        router.push('/dashboard');
+        // Hard redirect to ensure cookie is properly recognized
+        window.location.href = '/dashboard';
       } else {
         toast.error('Verification failed', {
           description: data.message || 'Invalid or expired code.',
@@ -165,8 +161,6 @@ export function useForgotPassword() {
 
 // Hook: Reset Password
 export function useResetPassword() {
-  const router = useRouter();
-
   return useMutation({
     mutationFn: resetPasswordAction,
     onSuccess: (data) => {
@@ -174,7 +168,7 @@ export function useResetPassword() {
         toast.success('Password reset successful!', {
           description: 'You can now login with your new password.',
         });
-        router.push('/auth/login');
+        window.location.href = '/auth/login';
       } else {
         toast.error('Reset failed', {
           description: data.message || 'Invalid or expired code.',

@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,8 +11,6 @@ import { adminLoginAction } from '@/server/actions/admin-auth'
 import { toast } from 'sonner'
 
 export default function AdminLoginPage() {
-  const router = useRouter()
-  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -26,7 +23,6 @@ export default function AdminLoginPage() {
     setError('')
 
     try {
-      // Call the admin login action
       const result = await adminLoginAction({ email, password })
       
       if (!result) {
@@ -37,32 +33,21 @@ export default function AdminLoginPage() {
       }
 
       if (result.success) {
-        // Admin verified - proceed
-        toast.success('Welcome Admin!', {
-          description: result.message || 'Redirecting to admin panel...',
-        })
-        
-        setLoading(false)
-        
-        setTimeout(() => {
-          router.push('/admin')
-          router.refresh()
-        }, 500)
+        toast.success('Welcome Admin!')
+        // Hard redirect to ensure cookie is sent with request - fixes production auth issues
+        window.location.href = '/admin'
       } else {
         toast.error('Login failed', {
           description: result.error || 'Invalid admin credentials',
         })
-        
         setError(result.error || 'Invalid admin credentials')
         setLoading(false)
       }
     } catch (err) {
       console.error('Admin login error:', err)
-      
       toast.error('An error occurred', {
         description: 'Please try again later.',
       })
-      
       setError('An unexpected error occurred')
       setLoading(false)
     }
